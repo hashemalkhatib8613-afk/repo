@@ -102,26 +102,6 @@ st.markdown(
         font-weight: 800;
       }
 
-      .sidebar-title {
-        color: #8f96a3;
-        font-size: 0.74rem;
-        font-weight: 900;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        margin: 0.6rem 0 0.5rem;
-      }
-
-      .nav-active {
-        border: 1px solid rgba(215, 25, 32, 0.62);
-        border-radius: 14px;
-        padding: 0.72rem 0.85rem;
-        margin-bottom: 0.55rem;
-        color: #ffffff;
-        background: linear-gradient(135deg, rgba(215, 25, 32, 0.28), rgba(32, 38, 53, 0.96));
-        box-shadow: 0 0 0 3px rgba(215, 25, 32, 0.15);
-        font-weight: 900;
-      }
-
       .block-container {
         padding-top: 1.4rem;
         padding-bottom: 7rem;
@@ -152,6 +132,15 @@ st.markdown(
         color: #ffffff;
         background: linear-gradient(180deg, #2d3548, #1d2330);
         transform: translateY(-1px);
+      }
+
+      /* Active sidebar option highlight */
+      section[data-testid="stSidebar"] div.stButton > button[kind="primary"] {
+        border: 1px solid rgba(215, 25, 32, 0.62) !important;
+        color: #ffffff !important;
+        background: linear-gradient(135deg, rgba(215, 25, 32, 0.28), rgba(32, 38, 53, 0.96)) !important;
+        box-shadow: 0 0 0 3px rgba(215, 25, 32, 0.15) !important;
+        font-weight: 900 !important;
       }
 
       .sidebar-footnote {
@@ -189,50 +178,71 @@ st.markdown(
         justify-content: flex-start !important;
       }
 
-      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] div.stButton > button {
-        width: 30px !important;
-        min-width: 30px !important;
-        height: 30px !important;
-        min-height: 30px !important;
-        border-radius: 999px !important;
-        padding: 0 !important;
-
-        /* Move the dots slightly left */
-        margin: 0.1rem 0 0 -0.45rem !important;
-
-        /* Fully transparent button */
+      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"],
+      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] div,
+      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] div.stButton {
         background: transparent !important;
         background-color: transparent !important;
         border: none !important;
         box-shadow: none !important;
+      }
+
+      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button,
+      section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button {
+        width: 28px !important;
+        min-width: 28px !important;
+        height: 28px !important;
+        min-height: 28px !important;
+
+        padding: 0 !important;
+        margin: 0.1rem 0 0 -0.6rem !important;
+
+        background: transparent !important;
+        background-color: transparent !important;
+        background-image: none !important;
+
+        border: none !important;
         outline: none !important;
+        box-shadow: none !important;
 
         color: #d8dde8 !important;
         font-size: 1.15rem !important;
         font-weight: 900 !important;
         line-height: 1 !important;
 
-        text-align: center !important;
-        justify-content: center !important;
+        display: flex !important;
         align-items: center !important;
+        justify-content: center !important;
+
+        text-align: center !important;
       }
 
-      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] div.stButton > button:hover {
+      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button:hover,
+      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button:focus,
+      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button:active,
+      section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button:hover,
+      section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button:focus,
+      section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button:active {
+        background: transparent !important;
         background-color: transparent !important;
-        background-color: rgba(255, 255, 255, 0.06) !important;
+        background-image: none !important;
+
         border: none !important;
+        outline: none !important;
         box-shadow: none !important;
+
         transform: none !important;
         color: #ffffff !important;
       }
 
-      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] div.stButton > button:focus,
-      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] div.stButton > button:active {
+      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button::before,
+      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button::after,
+      section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button::before,
+      section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button::after {
         background: transparent !important;
         background-color: transparent !important;
         border: none !important;
         box-shadow: none !important;
-        outline: none !important;
       }
 
       section[data-testid="stSidebar"] [class*="st-key-chat_actions_wrap_"] {
@@ -319,78 +329,6 @@ st.markdown(
       div[data-testid="stAlert"] {
         border-radius: 10px;
       }
-
-      /* FINAL FORCE FIX - Remove 3 dots button background completely */
-section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"],
-section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] div,
-section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] div.stButton {
-  background: transparent !important;
-  background-color: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-/* Target the actual 3 dots button */
-section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button,
-section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button,
-section[data-testid="stSidebar"] button[kind="secondary"][title="Chat options"] {
-  width: 28px !important;
-  min-width: 28px !important;
-  height: 28px !important;
-  min-height: 28px !important;
-
-  padding: 0 !important;
-  margin: 0.1rem 0 0 -0.6rem !important;
-
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-
-  color: #d8dde8 !important;
-  font-size: 1.15rem !important;
-  font-weight: 900 !important;
-  line-height: 1 !important;
-
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-
-  text-align: center !important;
-}
-
-/* Remove background on hover, click, and focus */
-section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button:hover,
-section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button:focus,
-section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button:active,
-section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button:hover,
-section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button:focus,
-section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button:active {
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
-
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-
-  transform: none !important;
-  color: #ffffff !important;
-}
-
-/* Remove any pseudo background Streamlit may add */
-section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button::before,
-section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button::after,
-section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button::before,
-section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button::after {
-  background: transparent !important;
-  background-color: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
     </style>
     """,
     unsafe_allow_html=True,
@@ -783,11 +721,6 @@ with st.sidebar:
 
     init_chat_sessions()
 
-    active_label = current_chat()["title"] if st.session_state.page == "Chat" else dict(NAV_ITEMS)[st.session_state.page]
-
-    st.markdown('<div class="sidebar-title">Navigation</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="nav-active">{active_label}</div>', unsafe_allow_html=True)
-
     if st.button("＋ New Chat", key="sidebar_new_chat", type="primary"):
         create_new_chat()
         st.rerun()
@@ -800,8 +733,9 @@ with st.sidebar:
                 with row_col:
                     with st.container(key=f"chat_select_wrap_{chat['id']}"):
                         label = "💬 " + chat["title"]
+                        chat_type = "primary" if st.session_state.page == "Chat" and st.session_state.current_chat_id == chat["id"] else "secondary"
 
-                        if st.button(label, key=f"select_{chat['id']}", type="secondary"):
+                        if st.button(label, key=f"select_{chat['id']}", type=chat_type):
                             st.session_state.current_chat_id = chat["id"]
                             st.session_state.page = "Chat"
                             st.session_state.open_chat_menu_id = None
@@ -857,7 +791,9 @@ with st.sidebar:
                                 st.rerun()
 
     for page_name, label in NAV_ITEMS:
-        if st.button(label, key=f"nav_{page_name}", type="secondary"):
+        nav_button_type = "primary" if st.session_state.page == page_name else "secondary"
+
+        if st.button(label, key=f"nav_{page_name}", type=nav_button_type):
             st.session_state.page = page_name
             st.session_state.open_chat_menu_id = None
             st.rerun()
