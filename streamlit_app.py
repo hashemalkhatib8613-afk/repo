@@ -58,56 +58,69 @@ st.markdown(
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
       :root {
-        --z-bg: #070a14;
-        --z-bg-2: #0b1020;
-        --z-bg-3: #10172a;
-        --z-sidebar: #080d1d;
-        --z-sidebar-2: #0b1230;
-        --z-card: rgba(18, 25, 47, 0.72);
-        --z-card-strong: rgba(22, 31, 59, 0.92);
-        --z-glass: rgba(255, 255, 255, 0.065);
-        --z-border: rgba(255, 255, 255, 0.105);
-        --z-border-2: rgba(148, 163, 184, 0.18);
+        --z-bg: #050713;
+        --z-bg-2: #080c1d;
+        --z-bg-3: #0d1326;
+        --z-sidebar: #070b1b;
+        --z-card: rgba(15, 23, 42, 0.88);
+        --z-card-2: rgba(18, 27, 52, 0.92);
+        --z-card-3: rgba(23, 34, 64, 0.94);
+        --z-border: rgba(255, 255, 255, 0.10);
+        --z-border-2: rgba(148, 163, 184, 0.20);
         --z-text: #f8fafc;
-        --z-text-2: #dbe4f0;
+        --z-text-2: #dbeafe;
         --z-muted: #94a3b8;
         --z-muted-2: #64748b;
         --z-purple: #7c3aed;
         --z-purple-2: #a855f7;
         --z-indigo: #4f46e5;
         --z-blue: #38bdf8;
-        --z-success: #22c55e;
+        --z-orange: #f59e0b;
         --z-danger: #fb7185;
-        --z-warning: #f59e0b;
-        --z-radius-lg: 24px;
+        --z-radius-lg: 26px;
         --z-radius-md: 18px;
-        --z-shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
-        --z-shadow-soft: 0 18px 44px rgba(0, 0, 0, 0.24);
-        --z-glow: 0 0 0 1px rgba(124, 58, 237, 0.12), 0 18px 46px rgba(124, 58, 237, 0.15);
+        --z-shadow: 0 26px 80px rgba(0, 0, 0, 0.42);
+        --z-shadow-soft: 0 18px 46px rgba(0, 0, 0, 0.30);
       }
 
       html,
       body,
-      [class*="css"] {
+      [class*="css"],
+      [class*="st-"] {
         font-family: "Inter", sans-serif !important;
       }
 
-      .stApp {
+      html,
+      body {
+        background: var(--z-bg) !important;
+      }
+
+      .stApp,
+      [data-testid="stAppViewContainer"],
+      [data-testid="stAppViewContainer"] > .main,
+      .main,
+      section.main {
         background:
-          radial-gradient(circle at 78% 6%, rgba(124, 58, 237, 0.18), transparent 30%),
-          radial-gradient(circle at 18% 16%, rgba(56, 189, 248, 0.08), transparent 28%),
-          linear-gradient(135deg, #060914 0%, #070a14 46%, #0b1020 100%);
-        color: var(--z-text);
+          radial-gradient(circle at 85% 6%, rgba(124, 58, 237, 0.22), transparent 32%),
+          radial-gradient(circle at 20% 12%, rgba(56, 189, 248, 0.08), transparent 28%),
+          linear-gradient(135deg, #050713 0%, #080c1d 48%, #050713 100%) !important;
+        color: var(--z-text) !important;
       }
 
       header[data-testid="stHeader"] {
-        background: transparent;
+        background: transparent !important;
+      }
+
+      [data-testid="stToolbar"] {
+        color: var(--z-text) !important;
       }
 
       .block-container {
         max-width: 1180px;
-        padding-top: 1.35rem;
-        padding-bottom: 8rem;
+        padding-top: 1.25rem !important;
+        padding-bottom: 8.5rem !important;
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
       }
 
       h1, h2, h3, h4, h5, h6 {
@@ -115,7 +128,7 @@ st.markdown(
         letter-spacing: -0.035em;
       }
 
-      p, span, li, label {
+      p, span, li, label, div {
         color: inherit;
       }
 
@@ -124,15 +137,17 @@ st.markdown(
          ================================ */
 
       section[data-testid="stSidebar"] {
-        width: 320px !important;
+        width: 330px !important;
+        min-width: 330px !important;
         background:
-          radial-gradient(circle at 20% 0%, rgba(124, 58, 237, 0.16), transparent 32%),
-          linear-gradient(180deg, #090f24 0%, #060914 100%);
-        border-right: 1px solid rgba(255, 255, 255, 0.08);
+          radial-gradient(circle at 20% 0%, rgba(124, 58, 237, 0.20), transparent 32%),
+          linear-gradient(180deg, #080d1f 0%, #050713 100%) !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
       }
 
       section[data-testid="stSidebar"] > div {
-        padding: 1rem 0.85rem;
+        padding: 1rem 0.85rem !important;
+        background: transparent !important;
       }
 
       section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {
@@ -141,8 +156,8 @@ st.markdown(
         padding: 1.05rem 0.95rem 1.2rem;
         background:
           radial-gradient(circle at 24% 3%, rgba(168, 85, 247, 0.20), transparent 30%),
-          linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(8, 13, 29, 0.96));
-        border: 1px solid rgba(255, 255, 255, 0.09);
+          linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(8, 13, 29, 0.98)) !important;
+        border: 1px solid rgba(255, 255, 255, 0.10);
         box-shadow: var(--z-shadow);
         backdrop-filter: blur(18px);
       }
@@ -156,8 +171,8 @@ st.markdown(
         background:
           radial-gradient(circle at 82% 14%, rgba(168, 85, 247, 0.30), transparent 32%),
           linear-gradient(135deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.045));
-        border: 1px solid rgba(255, 255, 255, 0.11);
-        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.26);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.30);
       }
 
       .sidebar-brand-card::after {
@@ -169,7 +184,6 @@ st.markdown(
         bottom: -65px;
         border-radius: 999px;
         background: rgba(79, 70, 229, 0.22);
-        filter: blur(2px);
       }
 
       .sidebar-brand-top {
@@ -193,7 +207,7 @@ st.markdown(
         font-weight: 900;
         font-size: 0.92rem;
         background: linear-gradient(135deg, var(--z-purple), var(--z-indigo));
-        box-shadow: 0 14px 34px rgba(124, 58, 237, 0.34);
+        box-shadow: 0 14px 34px rgba(124, 58, 237, 0.36);
       }
 
       .sidebar-brand-title {
@@ -244,14 +258,18 @@ st.markdown(
       }
 
       section[data-testid="stSidebar"] details {
-        border: 0 !important;
+        border: 1px solid rgba(255, 255, 255, 0.10) !important;
+        border-radius: 18px !important;
+        background: rgba(255, 255, 255, 0.045) !important;
+        overflow: hidden !important;
       }
 
       section[data-testid="stSidebar"] details summary {
         color: var(--z-text) !important;
         font-weight: 800;
-        font-size: 0.86rem;
-        padding-bottom: 0.35rem;
+        font-size: 0.88rem;
+        padding: 0.72rem 0.8rem !important;
+        background: rgba(255, 255, 255, 0.045) !important;
       }
 
       section[data-testid="stSidebar"] div.stButton > button {
@@ -310,7 +328,7 @@ st.markdown(
 
       section[data-testid="stSidebar"] [class*="st-key-chat_item_"] {
         border-radius: 16px;
-        padding: 0.15rem 0.1rem;
+        padding: 0.15rem 0.35rem;
         margin-bottom: 0.3rem;
         background: transparent;
       }
@@ -340,7 +358,7 @@ st.markdown(
 
       section[data-testid="stSidebar"] [class*="st-key-chat_select_wrap_"] div.stButton > button[kind="primary"] {
         color: #ffffff !important;
-        background: rgba(124, 58, 237, 0.26) !important;
+        background: rgba(124, 58, 237, 0.30) !important;
         border: 1px solid rgba(168, 85, 247, 0.28) !important;
         box-shadow: none !important;
       }
@@ -419,7 +437,7 @@ st.markdown(
         background:
           radial-gradient(circle at 82% 50%, rgba(124, 58, 237, 0.33), transparent 30%),
           radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.13), transparent 30%),
-          linear-gradient(135deg, rgba(18, 25, 47, 0.92), rgba(15, 23, 42, 0.74));
+          linear-gradient(135deg, rgba(18, 25, 47, 0.96), rgba(15, 23, 42, 0.86)) !important;
         border: 1px solid var(--z-border);
         box-shadow: var(--z-shadow-soft);
         backdrop-filter: blur(20px);
@@ -463,7 +481,7 @@ st.markdown(
       }
 
       .page-brand-title {
-        color: #ffffff;
+        color: #ffffff !important;
         font-size: 2.05rem;
         font-weight: 900;
         letter-spacing: -0.05em;
@@ -493,11 +511,11 @@ st.markdown(
       }
 
       /* ================================
-         MAIN CONTENT CARDS
+         MAIN CONTENT
          ================================ */
 
       div[data-testid="stMetric"] {
-        background: var(--z-card-strong);
+        background: var(--z-card-2) !important;
         border: 1px solid var(--z-border);
         border-radius: 22px;
         padding: 18px;
@@ -516,7 +534,7 @@ st.markdown(
       }
 
       .stPlotlyChart {
-        background: var(--z-card-strong);
+        background: var(--z-card-2) !important;
         border: 1px solid var(--z-border);
         border-radius: 26px;
         padding: 1rem;
@@ -531,9 +549,9 @@ st.markdown(
       }
 
       div[data-testid="stExpander"] {
-        border: 1px solid var(--z-border);
-        border-radius: 20px;
-        background: rgba(15, 23, 42, 0.92);
+        border: 1px solid var(--z-border) !important;
+        border-radius: 20px !important;
+        background: rgba(15, 23, 42, 0.92) !important;
         box-shadow: var(--z-shadow-soft);
         overflow: hidden;
       }
@@ -558,7 +576,7 @@ st.markdown(
          ================================ */
 
       div[data-testid="stChatMessage"] {
-        background: transparent;
+        background: transparent !important;
         padding: 0.45rem 0;
       }
 
@@ -573,11 +591,11 @@ st.markdown(
       }
 
       div[data-testid="stChatMessage"] [data-testid="chatAvatarIcon-assistant"] {
-        background: linear-gradient(135deg, var(--z-purple), var(--z-indigo));
+        background: linear-gradient(135deg, var(--z-purple), var(--z-indigo)) !important;
       }
 
       div[data-testid="stChatMessage"] [data-testid="chatAvatarIcon-user"] {
-        background: rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.12) !important;
         color: #ffffff;
       }
 
@@ -633,23 +651,23 @@ st.markdown(
 
       .st-key-fixed_chat_bar {
         position: fixed;
-        left: calc(320px + 50%);
+        left: calc(330px + 50%);
         transform: translateX(-50%);
         bottom: 1.35rem;
         z-index: 1001;
-        width: min(780px, calc(100vw - 430px));
+        width: min(780px, calc(100vw - 450px));
         border: 1px solid rgba(255, 255, 255, 0.13);
         border-radius: 999px;
         padding: 0.44rem 0.48rem 0.44rem 1rem;
-        background: rgba(15, 23, 42, 0.92);
-        box-shadow: 0 26px 70px rgba(0, 0, 0, 0.44);
+        background: rgba(15, 23, 42, 0.94) !important;
+        box-shadow: 0 26px 70px rgba(0, 0, 0, 0.50);
         backdrop-filter: blur(22px);
       }
 
       .st-key-fixed_chat_bar [data-testid="stForm"] {
         border: 0;
         padding: 0;
-        background: transparent;
+        background: transparent !important;
       }
 
       .st-key-fixed_chat_bar div[data-testid="stHorizontalBlock"] {
@@ -707,11 +725,12 @@ st.markdown(
       @media (max-width: 900px) {
         section[data-testid="stSidebar"] {
           width: auto !important;
+          min-width: auto !important;
         }
 
         .block-container {
-          padding-left: 1rem;
-          padding-right: 1rem;
+          padding-left: 1rem !important;
+          padding-right: 1rem !important;
         }
 
         .st-key-fixed_chat_bar {
