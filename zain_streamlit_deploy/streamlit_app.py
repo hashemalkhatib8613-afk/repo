@@ -146,27 +146,51 @@ st.markdown(
         font-size: 0.72rem;
         line-height: 1.45;
       }
-      .st-key-clear_chat_float {
-        position: fixed;
-        right: 4.9rem;
-        bottom: 1.05rem;
-        z-index: 1001;
-        width: 92px;
-      }
-      .st-key-clear_chat_float button {
-        min-height: 38px !important;
-        padding: 0 0.7rem !important;
-        justify-content: center !important;
-        border-radius: 10px !important;
-        background: #1f2430 !important;
-        font-size: 0.78rem !important;
-      }
-      .st-key-clear_chat_float button:hover {
-        background: #2d3548 !important;
-      }
-      div[data-testid="stAlert"] {
-        border-radius: 10px;
-      }
+ .st-key-fixed_chat_bar {
+  position: fixed;
+  left: 23rem;
+  right: 2rem;
+  bottom: 0.9rem;
+  z-index: 1001;
+  max-width: calc(100vw - 25rem);
+  border: 1px solid #303746;
+  border-radius: 16px;
+  padding: 0.75rem;
+  background: rgba(17, 20, 27, 0.98);
+  box-shadow: 0 -18px 42px rgba(0, 0, 0, 0.28);
+}
+
+.st-key-fixed_chat_bar [data-testid="stForm"] {
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.st-key-fixed_chat_bar div[data-testid="stHorizontalBlock"] {
+  align-items: end;
+  gap: 0.75rem;
+}
+
+.st-key-fixed_chat_bar input {
+  width: 100% !important;
+  min-height: 48px;
+  border-radius: 12px;
+}
+
+.st-key-fixed_chat_bar button {
+  min-height: 48px !important;
+  justify-content: center !important;
+  border-radius: 12px !important;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .st-key-fixed_chat_bar {
+    left: 1rem;
+    right: 1rem;
+    max-width: calc(100vw - 2rem);
+  }
+}
     </style>
     """,
     unsafe_allow_html=True,
@@ -194,12 +218,59 @@ SUGGESTED_QUESTIONS = [
 ]
 
 NAV_ITEMS = [
-    ("Chat", "💬 Chat"),
     ("Overview", "📊 Overview"),
     ("Chart Builder", "📈 Chart Builder"),
     ("Suggested Questions", "✨ Suggested Questions"),
     ("SQL Query Builder", "🧮 SQL Query Builder"),
 ]
+
+
+def default_assistant_message():
+    return {
+        "role": "assistant",
+        "content": "Hello. Ask me a business question about the Zain Customer 360 database.",
+    }
+
+
+def title_from_question(question):
+    cleaned = " ".join(question.split())
+    return cleaned[:34] + "..." if len(cleaned) > 34 else cleaned or "New Chat"
+
+
+def init_chat_sessions():
+    if "chat_sessions" not in st.session_state:
+        st.session_state.chat_sessions = [
+            {
+                "id": "chat_1",
+                "title": "New Chat",
+                "messages": [default_assistant_message()],
+            }
+        ]
+        st.session_state.current_chat_id = "chat_1"
+    if "current_chat_id" not in st.session_state:
+        st.session_state.current_chat_id = st.session_state.chat_sessions[0]["id"]
+
+
+def current_chat():
+    init_chat_sessions()
+    for chat in st.session_state.chat_sessions:
+        if chat["id"] == st.session_state.current_chat_id:
+            return chat
+    st.session_state.current_chat_id = st.session_state.chat_sessions[0]["id"]
+    return st.session_state.chat_sessions[0]
+
+
+def create_new_chat():
+    init_chat_sessions()
+    next_id = f"chat_{len(st.session_state.chat_sessions) + 1}_{int(time.time())}"
+    chat = {
+        "id": next_id,
+        "title": "New Chat",
+        "messages": [default_assistant_message()],
+    }
+    st.session_state.chat_sessions.insert(0, chat)
+    st.session_state.current_chat_id = next_id
+    st.session_state.page = "Chat"
 
 
 def render_chart(chart):
@@ -316,34 +387,34 @@ def show_chart_builder():
 
 
 def show_chat():
+    chat = current_chat()
     st.title("Customer 360 Chat")
-    st.caption("Ask natural-language questions about customers, churn, billing, complaints, campaigns, and network events.")
+    st.caption(f"{chat['title']} · Ask about customers, churn, billing, complaints, campaigns, and network events.")
 
-    if "messages" not in st.session_state:
-        st.session_state.messages = [
-            {"role": "assistant", "content": "Hello. Ask me a business question about the Zain Customer 360 database."}
-        ]
-
-    for index, message in enumerate(st.session_state.messages):
+    for index, message in enumerate(chat["messages"]):
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
             if message.get("sql"):
                 with st.expander("SQL Query"):
-                    render_sql_runner(message["sql"], key_prefix=f"history_{index}")
+                    render_sql_runner(message["sql"], key_prefix=f"{chat['id']}_history_{index}")
 
-    clear_box = st.container(key="clear_chat_float")
-    with clear_box:
-        clear_chat = st.button("Clear", key="clear_chat_button", width="stretch")
-    if clear_chat:
-        st.session_state.messages = [
-            {"role": "assistant", "content": "Hello. Ask me a business question about the Zain Customer 360 database."}
-        ]
-        st.success("Chat cleared.")
-        st.rerun()
-
-    prompt = st.chat_input("Ask a question about the Customer 360 database")
-    if prompt:
-        st.session_state.messages.append({"role": "user", "content": prompt})
+    chat_bar = st.container(key="fixed_chat_bar")
+    with chat_bar:
+        with st.form("fixed_chat_form", clear_on_submit=True):
+            input_col, send_col = st.columns([8, 1.4])
+            with input_col:
+                prompt = st.text_input(
+                    "Question",
+                    placeholder="Ask a question about the Customer 360 database",
+                    label_visibility="collapsed",
+                )
+            with send_col:
+                submitted = st.form_submit_button("Send", type="primary", width="stretch")
+    if submitted and prompt.strip():
+        prompt = prompt.strip()
+        if chat["title"] == "New Chat":
+            chat["title"] = title_from_question(prompt)
+        chat["messages"].append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
         with st.chat_message("assistant"):
@@ -352,22 +423,24 @@ def show_chat():
             stream_markdown(payload["answer"])
             if payload.get("sql"):
                 with st.expander("SQL Query"):
-                    render_sql_runner(payload["sql"], key_prefix=f"current_{len(st.session_state.messages)}")
-        st.session_state.messages.append(
+                    render_sql_runner(payload["sql"], key_prefix=f"{chat['id']}_current_{len(chat['messages'])}")
+        chat["messages"].append(
             {"role": "assistant", "content": payload["answer"], "sql": payload.get("sql", "")}
         )
 
 
 def show_suggested_questions():
+    chat = current_chat()
     st.title("Suggested Questions")
     st.caption("Use these predictable customer inputs to guide useful database-backed questions.")
     for question in SUGGESTED_QUESTIONS:
         if st.button(question):
-            st.session_state.messages = st.session_state.get("messages", [])
-            st.session_state.messages.append({"role": "user", "content": question})
+            if chat["title"] == "New Chat":
+                chat["title"] = title_from_question(question)
+            chat["messages"].append({"role": "user", "content": question})
             with st.spinner("Asking the SQL agent..."):
                 payload = ask_sql_agent_payload(question)
-            st.session_state.messages.append(
+            chat["messages"].append(
                 {"role": "assistant", "content": payload["answer"], "sql": payload.get("sql", "")}
             )
             st.success("Question sent to Chat. Open the Chat page to view the answer.")
@@ -401,10 +474,23 @@ with st.sidebar:
 
     if "page" not in st.session_state:
         st.session_state.page = "Chat"
+    init_chat_sessions()
 
-    active_label = dict(NAV_ITEMS)[st.session_state.page]
-    st.markdown('<div class="sidebar-title">Navigation</div>', unsafe_allow_html=True)
+    active_label = current_chat()["title"] if st.session_state.page == "Chat" else dict(NAV_ITEMS)[st.session_state.page]
+    st.markdown('<div class="sidebar-title">Current Chat</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="nav-active">{active_label}</div>', unsafe_allow_html=True)
+
+    if st.button("＋ New Chat", key="sidebar_new_chat", type="primary"):
+        create_new_chat()
+        st.rerun()
+
+    with st.expander("Chats", expanded=True):
+        for chat in st.session_state.chat_sessions:
+            label = "💬 " + chat["title"]
+            if st.button(label, key=f"select_{chat['id']}", type="secondary"):
+                st.session_state.current_chat_id = chat["id"]
+                st.session_state.page = "Chat"
+                st.rerun()
 
     for page_name, label in NAV_ITEMS:
         if st.button(label, key=f"nav_{page_name}", type="secondary"):
