@@ -163,26 +163,72 @@ st.markdown(
         line-height: 1.45;
       }
 
-      /* Sidebar chat rows */
+      /* ================================
+         SIDEBAR CHAT ROWS - FINAL STYLE
+         ================================ */
+
       section[data-testid="stSidebar"] div[data-testid="stHorizontalBlock"] {
         align-items: center;
+        gap: 0.35rem;
       }
 
-      section[data-testid="stSidebar"] div[data-testid="stPopover"] button {
-        width: 100% !important;
-        min-height: 44px !important;
-        border-radius: 12px !important;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-        justify-content: center !important;
-        text-align: center !important;
+      section[data-testid="stSidebar"] div[data-testid="stHorizontalBlock"] div.stButton > button {
+        min-height: 54px;
+        border-radius: 13px;
+        padding: 0.65rem 0.75rem !important;
+        font-size: 0.95rem;
+        line-height: 1.35;
       }
 
       section[data-testid="stSidebar"] div[data-testid="stPopover"] {
-        width: 100%;
+        width: 42px !important;
+        min-width: 42px !important;
       }
 
-      /* Fixed chat input bar */
+      section[data-testid="stSidebar"] div[data-testid="stPopover"] > button {
+        width: 38px !important;
+        height: 38px !important;
+        min-height: 38px !important;
+        border-radius: 999px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+        border: 1px solid transparent !important;
+        color: #cfd4df !important;
+        font-size: 1.35rem !important;
+        font-weight: 900 !important;
+        line-height: 1 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: none !important;
+      }
+
+      section[data-testid="stSidebar"] div[data-testid="stPopover"] > button svg {
+        display: none !important;
+      }
+
+      section[data-testid="stSidebar"] div[data-testid="stPopover"] > button:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
+        border-color: #303746 !important;
+        color: #ffffff !important;
+        transform: none !important;
+      }
+
+      section[data-testid="stSidebar"] div[data-testid="stPopover"] div.stButton > button {
+        width: 100% !important;
+        min-height: 38px !important;
+        border-radius: 10px !important;
+        padding: 0.45rem 0.7rem !important;
+        justify-content: flex-start !important;
+        text-align: left !important;
+        font-size: 0.85rem !important;
+      }
+
+      /* ================================
+         FIXED CHAT INPUT BAR
+         ================================ */
+
       .st-key-fixed_chat_bar {
         position: fixed;
         left: 23rem;
@@ -634,7 +680,7 @@ with st.sidebar:
 
     with st.expander("Chats", expanded=True):
         for chat in list(st.session_state.chat_sessions):
-            row_col, menu_col = st.columns([5, 1])
+            row_col, menu_col = st.columns([8, 1])
 
             with row_col:
                 label = "💬 " + chat["title"]
@@ -645,7 +691,7 @@ with st.sidebar:
                     st.rerun()
 
             with menu_col:
-                with st.popover("⋯", use_container_width=True):
+                with st.popover("⋯", use_container_width=False):
                     if st.button("Rename", key=f"rename_button_{chat['id']}"):
                         st.session_state.rename_chat_id = chat["id"]
                         st.session_state.rename_chat_value = chat["title"]
