@@ -1,3 +1,4 @@
+import base64
 import os
 import sqlite3
 import time
@@ -11,6 +12,16 @@ import streamlit as st
 APP_DIR = Path(__file__).resolve().parent
 LOGO_PATH = APP_DIR / "zain-logo.png"
 DB_PATH = APP_DIR / "zain_customer_360_ai_demo.db"
+
+
+def get_logo_data_uri():
+    if not LOGO_PATH.exists():
+        return ""
+    encoded = base64.b64encode(LOGO_PATH.read_bytes()).decode("utf-8")
+    return f"data:image/png;base64,{encoded}"
+
+
+LOGO_DATA_URI = get_logo_data_uri()
 
 
 def load_streamlit_secret():
@@ -420,12 +431,38 @@ def inject_css():
             overflow: hidden;
             border: 1px solid var(--border);
             border-radius: 28px;
-            padding: 1.3rem 1.35rem;
+            padding: 1.3rem min(11.5rem, 18vw) 1.3rem 1.35rem;
             background:
               radial-gradient(circle at 10% 0%, rgba(215,25,32,.24), transparent 28%),
               linear-gradient(135deg, var(--surface), var(--surface-2));
             box-shadow: 0 22px 70px var(--shadow);
             margin-bottom: 1.1rem;
+          }}
+
+          .hero-card::after {{
+            content: "";
+            position: absolute;
+            right: 1.35rem;
+            top: 50%;
+            width: clamp(76px, 10vw, 132px);
+            height: clamp(76px, 10vw, 132px);
+            transform: translateY(-50%);
+            border-radius: 28px;
+            background: rgba(255,255,255,.045);
+            border: 1px solid var(--border);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
+          }}
+
+          .hero-logo {{
+            position: absolute;
+            right: 2.15rem;
+            top: 50%;
+            width: clamp(58px, 7.4vw, 96px);
+            transform: translateY(-50%);
+            opacity: .64;
+            filter: grayscale(.1);
+            z-index: 1;
+            pointer-events: none;
           }}
 
           .hero-eyebrow {{
@@ -459,6 +496,17 @@ def inject_css():
             line-height: 1.6;
             max-width: 880px;
             margin-top: .65rem;
+          }}
+
+          @media (max-width: 700px) {{
+            .hero-card {{
+              padding: 1.15rem;
+            }}
+
+            .hero-card::after,
+            .hero-logo {{
+              display: none;
+            }}
           }}
 
           .kpi-card {{
@@ -657,12 +705,14 @@ def inject_css():
 
 
 def hero(title, copy, eyebrow="Zain 360 Copilot"):
+    logo_html = f'<img class="hero-logo" src="{LOGO_DATA_URI}" alt="Zain Logo">' if LOGO_DATA_URI else ""
     st.markdown(
         f"""
         <div class="hero-card">
           <div class="hero-eyebrow">{eyebrow}</div>
           <div class="hero-title">{title}</div>
           <div class="hero-copy">{copy}</div>
+          {logo_html}
         </div>
         """,
         unsafe_allow_html=True,
@@ -1573,11 +1623,6 @@ def show_data_catalog():
 
 def render_sidebar():
     with st.sidebar:
-        if LOGO_PATH.exists():
-            st.image(str(LOGO_PATH), use_container_width=True)
-        else:
-            st.markdown("### ⚡ Zain 360")
-
         st.markdown(
             """
             <div class="brand-card">
