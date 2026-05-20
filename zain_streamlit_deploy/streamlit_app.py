@@ -54,12 +54,6 @@ st.markdown(
         padding: 1.2rem 1rem;
       }
 
-      section[data-testid="stSidebar"] img {
-        max-width: 190px;
-        margin: 0 auto 0.65rem;
-        display: block;
-      }
-
       .sidebar-hero {
         border: 1px solid #303746;
         border-radius: 16px;
@@ -153,6 +147,54 @@ st.markdown(
       }
 
       /* ================================
+         PAGE HEADER / BRAND CARD
+         ================================ */
+
+      section.main [class*="st-key-page_brand_"] {
+        border: 1px solid #303746;
+        border-radius: 20px;
+        padding: 1.05rem 1.1rem;
+        margin-bottom: 1rem;
+        background:
+          radial-gradient(circle at 88% 16%, rgba(215, 25, 32, 0.14), transparent 23%),
+          linear-gradient(180deg, rgba(27, 33, 46, 0.98), rgba(13, 18, 28, 0.98));
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
+      }
+
+      section.main [class*="st-key-page_brand_"] img {
+        display: block;
+        margin-left: auto;
+        margin-top: 0.2rem;
+        max-width: 170px;
+        width: 100%;
+        opacity: 0.96;
+      }
+
+      .page-brand-eyebrow {
+        color: #aeb6c4;
+        font-size: 0.74rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 0.35rem;
+      }
+
+      .page-brand-title {
+        color: #ffffff;
+        font-size: 1.7rem;
+        font-weight: 900;
+        line-height: 1.15;
+        margin-bottom: 0.35rem;
+      }
+
+      .page-brand-copy {
+        color: #b6bcc8;
+        font-size: 0.92rem;
+        line-height: 1.55;
+        max-width: 780px;
+      }
+
+      /* ================================
          CHAT LIST - FINAL STYLE
          ================================ */
 
@@ -193,27 +235,21 @@ st.markdown(
         min-width: 28px !important;
         height: 28px !important;
         min-height: 28px !important;
-
         padding: 0 !important;
         margin: 0.1rem 0 0 -0.6rem !important;
-
         background: transparent !important;
         background-color: transparent !important;
         background-image: none !important;
-
         border: none !important;
         outline: none !important;
         box-shadow: none !important;
-
         color: #d8dde8 !important;
         font-size: 1.15rem !important;
         font-weight: 900 !important;
         line-height: 1 !important;
-
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-
         text-align: center !important;
       }
 
@@ -226,11 +262,9 @@ st.markdown(
         background: transparent !important;
         background-color: transparent !important;
         background-image: none !important;
-
         border: none !important;
         outline: none !important;
         box-shadow: none !important;
-
         transform: none !important;
         color: #ffffff !important;
       }
@@ -324,6 +358,14 @@ st.markdown(
           right: 1rem;
           max-width: calc(100vw - 2rem);
         }
+
+        section.main [class*="st-key-page_brand_"] img {
+          max-width: 135px;
+        }
+
+        .page-brand-title {
+          font-size: 1.35rem;
+        }
       }
 
       div[data-testid="stAlert"] {
@@ -373,6 +415,25 @@ def default_assistant_message():
 def title_from_question(question):
     cleaned = " ".join(question.split())
     return cleaned[:34] + "..." if len(cleaned) > 34 else cleaned or "New Chat"
+
+
+def render_page_brand(page_key, title, subtitle):
+    with st.container(key=f"page_brand_{page_key}"):
+        left_col, right_col = st.columns([6, 1.6])
+
+        with left_col:
+            st.markdown(
+                f"""
+                <div class="page-brand-eyebrow">Zain Customer 360</div>
+                <div class="page-brand-title">{title}</div>
+                <div class="page-brand-copy">{subtitle}</div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+        with right_col:
+            if LOGO_PATH.exists():
+                st.image(str(LOGO_PATH), width=170)
 
 
 def init_chat_sessions():
@@ -559,19 +620,20 @@ def render_sql_runner(default_sql="", key_prefix="sql_runner"):
 
 
 def show_overview():
-    st.title("Database Overview")
+    render_page_brand(
+        "overview",
+        "Database Overview",
+        "Get a high-level view of KPIs, table volumes, and key customer insights from the Customer 360 database.",
+    )
 
     data = get_database_overview()
-
     st.caption(data["summary"])
 
     cols = st.columns(len(data["kpis"]))
-
     for col, item in zip(cols, data["kpis"]):
         col.metric(item["label"], f"{item['value']:,}")
 
     chart_cols = st.columns(2)
-
     for index, chart in enumerate(data["charts"]):
         with chart_cols[index % 2]:
             render_chart(chart)
@@ -581,8 +643,11 @@ def show_overview():
 
 
 def show_chart_builder():
-    st.title("Chart Builder")
-    st.caption("Ask for one chart in business language. The app queries the database and builds only that chart.")
+    render_page_brand(
+        "chart_builder",
+        "Chart Builder",
+        "Describe the chart you need in plain language and let the app query the database and visualize the result.",
+    )
 
     question = st.text_area(
         "Chart inquiry",
@@ -595,7 +660,6 @@ def show_chart_builder():
     if st.button("Create Chart", type="primary"):
         with st.spinner("Building chart from database..."):
             chart = build_chart_from_question(question, CHART_TYPES[chart_label])
-
         st.session_state.last_chart = chart
 
     if st.session_state.get("last_chart"):
@@ -605,8 +669,11 @@ def show_chart_builder():
 def show_chat():
     chat = current_chat()
 
-    st.title("Customer 360 Chat")
-    st.caption(f"{chat['title']} · Ask about customers, churn, billing, complaints, campaigns, and network events.")
+    render_page_brand(
+        "chat",
+        "Customer 360 Chat",
+        f"{chat['title']} · Ask about customers, churn, billing, complaints, campaigns, and network events.",
+    )
 
     for index, message in enumerate(chat["messages"]):
         with st.chat_message(message["role"]):
@@ -665,8 +732,11 @@ def show_chat():
 def show_suggested_questions():
     chat = current_chat()
 
-    st.title("Suggested Questions")
-    st.caption("Use these predictable customer inputs to guide useful database-backed questions.")
+    render_page_brand(
+        "suggested_questions",
+        "Suggested Questions",
+        "Use these guided questions to explore common business scenarios and quickly move into database-backed answers.",
+    )
 
     for question in SUGGESTED_QUESTIONS:
         if st.button(question):
@@ -687,18 +757,23 @@ def show_suggested_questions():
             )
 
             st.success("Question sent to Chat. Open the Chat page to view the answer.")
-
             st.session_state.page = "Chat"
             time.sleep(0.8)
             st.rerun()
 
 
-with st.sidebar:
-    if LOGO_PATH.exists():
-        st.image(str(LOGO_PATH), width="stretch")
-    else:
-        st.warning("Logo image was not found in the app folder.")
+def show_sql_builder_page():
+    render_page_brand(
+        "sql_builder",
+        "SQL Query Builder",
+        "Run read-only SQL queries, inspect results quickly, and validate the data behind your business questions.",
+    )
 
+    st.caption("Safe runner for read-only SELECT queries.")
+    render_sql_runner("SELECT COUNT(*) AS total_customers FROM customers", key_prefix="standalone")
+
+
+with st.sidebar:
     st.markdown(
         """
         <div class="sidebar-hero">
@@ -748,7 +823,6 @@ with st.sidebar:
                                 st.session_state.open_chat_menu_id = None
                             else:
                                 st.session_state.open_chat_menu_id = chat["id"]
-
                             st.rerun()
 
                 if st.session_state.open_chat_menu_id == chat["id"]:
@@ -819,6 +893,4 @@ elif page == "Chart Builder":
 elif page == "Suggested Questions":
     show_suggested_questions()
 else:
-    st.title("SQL Query Builder")
-    st.caption("Safe runner for read-only SELECT queries.")
-    render_sql_runner("SELECT COUNT(*) AS total_customers FROM customers", key_prefix="standalone")
+    show_sql_builder_page()
