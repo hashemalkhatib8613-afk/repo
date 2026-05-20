@@ -211,12 +211,59 @@ SUGGESTED_QUESTIONS = [
 ]
 
 NAV_ITEMS = [
-    ("Chat", "💬 Chat"),
     ("Overview", "📊 Overview"),
     ("Chart Builder", "📈 Chart Builder"),
     ("Suggested Questions", "✨ Suggested Questions"),
     ("SQL Query Builder", "🧮 SQL Query Builder"),
 ]
+
+
+def default_assistant_message():
+    return {
+        "role": "assistant",
+        "content": "Hello. Ask me a business question about the Zain Customer 360 database.",
+    }
+
+
+def title_from_question(question):
+    cleaned = " ".join(question.split())
+    return cleaned[:34] + "..." if len(cleaned) > 34 else cleaned or "New Chat"
+
+
+def init_chat_sessions():
+    if "chat_sessions" not in st.session_state:
+        st.session_state.chat_sessions = [
+            {
+                "id": "chat_1",
+                "title": "New Chat",
+                "messages": [default_assistant_message()],
+            }
+        ]
+        st.session_state.current_chat_id = "chat_1"
+    if "current_chat_id" not in st.session_state:
+        st.session_state.current_chat_id = st.session_state.chat_sessions[0]["id"]
+
+
+def current_chat():
+    init_chat_sessions()
+    for chat in st.session_state.chat_sessions:
+        if chat["id"] == st.session_state.current_chat_id:
+            return chat
+    st.session_state.current_chat_id = st.session_state.chat_sessions[0]["id"]
+    return st.session_state.chat_sessions[0]
+
+
+def create_new_chat():
+    init_chat_sessions()
+    next_id = f"chat_{len(st.session_state.chat_sessions) + 1}_{int(time.time())}"
+    chat = {
+        "id": next_id,
+        "title": "New Chat",
+        "messages": [default_assistant_message()],
+    }
+    st.session_state.chat_sessions.insert(0, chat)
+    st.session_state.current_chat_id = next_id
+    st.session_state.page = "Chat"
 
 
 def render_chart(chart):
@@ -333,20 +380,16 @@ def show_chart_builder():
 
 
 def show_chat():
+    chat = current_chat()
     st.title("Customer 360 Chat")
-    st.caption("Ask natural-language questions about customers, churn, billing, complaints, campaigns, and network events.")
+    st.caption(f"{chat['title']} · Ask about customers, churn, billing, complaints, campaigns, and network events.")
 
-    if "messages" not in st.session_state:
-        st.session_state.messages = [
-            {"role": "assistant", "content": "Hello. Ask me a business question about the Zain Customer 360 database."}
-        ]
-
-    for index, message in enumerate(st.session_state.messages):
+    for index, message in enumerate(chat["messages"]):
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
             if message.get("sql"):
                 with st.expander("SQL Query"):
-                    render_sql_runner(message["sql"], key_prefix=f"history_{index}")
+                    render_sql_runner(message["sql"], key_prefix=f"{chat['id']}_history_{index}")
 
     chat_bar = st.container(key="fixed_chat_bar")
     with chat_bar:
@@ -362,7 +405,9 @@ def show_chat():
                 submitted = st.form_submit_button("Send", type="primary", width="stretch")
     if submitted and prompt.strip():
         prompt = prompt.strip()
-        st.session_state.messages.append({"role": "user", "content": prompt})
+        if chat["title"] == "New Chat":
+            chat["title"] = title_from_question(prompt)
+        chat["messages"].append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
         with st.chat_message("assistant"):
@@ -371,22 +416,24 @@ def show_chat():
             stream_markdown(payload["answer"])
             if payload.get("sql"):
                 with st.expander("SQL Query"):
-                    render_sql_runner(payload["sql"], key_prefix=f"current_{len(st.session_state.messages)}")
-        st.session_state.messages.append(
+                    render_sql_runner(payload["sql"], key_prefix=f"{chat['id']}_current_{len(chat['messages'])}")
+        chat["messages"].append(
             {"role": "assistant", "content": payload["answer"], "sql": payload.get("sql", "")}
         )
 
 
 def show_suggested_questions():
+    chat = current_chat()
     st.title("Suggested Questions")
     st.caption("Use these predictable customer inputs to guide useful database-backed questions.")
     for question in SUGGESTED_QUESTIONS:
         if st.button(question):
-            st.session_state.messages = st.session_state.get("messages", [])
-            st.session_state.messages.append({"role": "user", "content": question})
+            if chat["title"] == "New Chat":
+                chat["title"] = title_from_question(question)
+            chat["messages"].append({"role": "user", "content": question})
             with st.spinner("Asking the SQL agent..."):
                 payload = ask_sql_agent_payload(question)
-            st.session_state.messages.append(
+            chat["messages"].append(
                 {"role": "assistant", "content": payload["answer"], "sql": payload.get("sql", "")}
             )
             st.success("Question sent to Chat. Open the Chat page to view the answer.")
@@ -420,17 +467,23 @@ with st.sidebar:
 
     if "page" not in st.session_state:
         st.session_state.page = "Chat"
+    init_chat_sessions()
 
-    active_label = dict(NAV_ITEMS)[st.session_state.page]
+    active_label = current_chat()["title"] if st.session_state.page == "Chat" else dict(NAV_ITEMS)[st.session_state.page]
     st.markdown('<div class="sidebar-title">Navigation</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="nav-active">{active_label}</div>', unsafe_allow_html=True)
 
     if st.button("＋ New Chat", key="sidebar_new_chat", type="primary"):
-        st.session_state.messages = [
-            {"role": "assistant", "content": "Hello. Ask me a business question about the Zain Customer 360 database."}
-        ]
-        st.session_state.page = "Chat"
+        create_new_chat()
         st.rerun()
+
+    with st.expander("Chats", expanded=True):
+        for chat in st.session_state.chat_sessions:
+            label = "💬 " + chat["title"]
+            if st.button(label, key=f"select_{chat['id']}", type="secondary"):
+                st.session_state.current_chat_id = chat["id"]
+                st.session_state.page = "Chat"
+                st.rerun()
 
     for page_name, label in NAV_ITEMS:
         if st.button(label, key=f"nav_{page_name}", type="secondary"):
