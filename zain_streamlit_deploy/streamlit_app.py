@@ -146,44 +146,51 @@ st.markdown(
         font-size: 0.72rem;
         line-height: 1.45;
       }
-      .st-key-fixed_chat_bar {
-        position: fixed;
-        left: 22rem;
-        right: 1.5rem;
-        bottom: 0.9rem;
-        z-index: 1001;
-        border: 1px solid #303746;
-        border-radius: 16px;
-        padding: 0.75rem;
-        background: rgba(17, 20, 27, 0.98);
-        box-shadow: 0 -18px 42px rgba(0, 0, 0, 0.28);
-      }
-      .st-key-fixed_chat_bar [data-testid="stForm"] {
-        border: 0;
-        padding: 0;
-        background: transparent;
-      }
-      .st-key-fixed_chat_bar div[data-testid="stHorizontalBlock"] {
-        align-items: end;
-      }
-      .st-key-fixed_chat_bar input {
-        min-height: 48px;
-        border-radius: 12px;
-      }
-      .st-key-fixed_chat_bar button {
-        min-height: 48px !important;
-        justify-content: center !important;
-        border-radius: 12px !important;
-      }
-      @media (max-width: 900px) {
-        .st-key-fixed_chat_bar {
-          left: 1rem;
-          right: 1rem;
-        }
-      }
-      div[data-testid="stAlert"] {
-        border-radius: 10px;
-      }
+ .st-key-fixed_chat_bar {
+  position: fixed;
+  left: 23rem;
+  right: 2rem;
+  bottom: 0.9rem;
+  z-index: 1001;
+  max-width: calc(100vw - 25rem);
+  border: 1px solid #303746;
+  border-radius: 16px;
+  padding: 0.75rem;
+  background: rgba(17, 20, 27, 0.98);
+  box-shadow: 0 -18px 42px rgba(0, 0, 0, 0.28);
+}
+
+.st-key-fixed_chat_bar [data-testid="stForm"] {
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.st-key-fixed_chat_bar div[data-testid="stHorizontalBlock"] {
+  align-items: end;
+  gap: 0.75rem;
+}
+
+.st-key-fixed_chat_bar input {
+  width: 100% !important;
+  min-height: 48px;
+  border-radius: 12px;
+}
+
+.st-key-fixed_chat_bar button {
+  min-height: 48px !important;
+  justify-content: center !important;
+  border-radius: 12px !important;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .st-key-fixed_chat_bar {
+    left: 1rem;
+    right: 1rem;
+    max-width: calc(100vw - 2rem);
+  }
+}
     </style>
     """,
     unsafe_allow_html=True,
@@ -394,7 +401,7 @@ def show_chat():
     chat_bar = st.container(key="fixed_chat_bar")
     with chat_bar:
         with st.form("fixed_chat_form", clear_on_submit=True):
-            input_col, send_col = st.columns([9, 1])
+            input_col, send_col = st.columns([8, 1.4])
             with input_col:
                 prompt = st.text_input(
                     "Question",
