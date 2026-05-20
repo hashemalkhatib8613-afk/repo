@@ -146,6 +146,24 @@ st.markdown(
         font-size: 0.72rem;
         line-height: 1.45;
       }
+      .st-key-clear_chat_float {
+        position: fixed;
+        right: 4.9rem;
+        bottom: 1.05rem;
+        z-index: 1001;
+        width: 92px;
+      }
+      .st-key-clear_chat_float button {
+        min-height: 38px !important;
+        padding: 0 0.7rem !important;
+        justify-content: center !important;
+        border-radius: 10px !important;
+        background: #1f2430 !important;
+        font-size: 0.78rem !important;
+      }
+      .st-key-clear_chat_float button:hover {
+        background: #2d3548 !important;
+      }
       div[data-testid="stAlert"] {
         border-radius: 10px;
       }
@@ -313,12 +331,9 @@ def show_chat():
                 with st.expander("SQL Query"):
                     render_sql_runner(message["sql"], key_prefix=f"history_{index}")
 
-    clear_col, hint_col = st.columns([1, 5])
-    with clear_col:
-        clear_chat = st.button("Clear Chat", key="clear_chat_button", width="stretch")
-    with hint_col:
-        st.caption("Use the fixed message box at the bottom of the page to ask a question.")
-
+    clear_box = st.container(key="clear_chat_float")
+    with clear_box:
+        clear_chat = st.button("Clear", key="clear_chat_button", width="stretch")
     if clear_chat:
         st.session_state.messages = [
             {"role": "assistant", "content": "Hello. Ask me a business question about the Zain Customer 360 database."}
