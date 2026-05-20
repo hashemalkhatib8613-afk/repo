@@ -313,18 +313,11 @@ def show_chat():
                 with st.expander("SQL Query"):
                     render_sql_runner(message["sql"], key_prefix=f"history_{index}")
 
-    with st.form("chat_question_form", clear_on_submit=True):
-        prompt = st.text_area(
-            "Ask a question",
-            placeholder="Ask a question about the Customer 360 database",
-            height=90,
-            label_visibility="collapsed",
-        )
-        submit_col, clear_col = st.columns([3, 1])
-        with submit_col:
-            submitted = st.form_submit_button("Submit Question", type="primary", width="stretch")
-        with clear_col:
-            clear_chat = st.form_submit_button("Clear Chat", width="stretch")
+    clear_col, hint_col = st.columns([1, 5])
+    with clear_col:
+        clear_chat = st.button("Clear Chat", key="clear_chat_button", width="stretch")
+    with hint_col:
+        st.caption("Use the fixed message box at the bottom of the page to ask a question.")
 
     if clear_chat:
         st.session_state.messages = [
@@ -333,8 +326,8 @@ def show_chat():
         st.success("Chat cleared.")
         st.rerun()
 
-    if submitted and prompt.strip():
-        prompt = prompt.strip()
+    prompt = st.chat_input("Ask a question about the Customer 360 database")
+    if prompt:
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
