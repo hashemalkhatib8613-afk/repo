@@ -218,7 +218,7 @@ st.markdown(
       }
 
       section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] div.stButton > button:hover {
-        background: rgba(255, 255, 255, 0.06) !important;
+        background-color: transparent !important;
         background-color: rgba(255, 255, 255, 0.06) !important;
         border: none !important;
         box-shadow: none !important;
