@@ -223,27 +223,42 @@ def stream_markdown(text):
         time.sleep(0.015)
 
 
+def run_sql_callback(key_prefix):
+    sql = st.session_state.get(f"{key_prefix}_sql_editor", "").strip()
+    try:
+        st.session_state[f"{key_prefix}_sql_result"] = execute_sql_query(sql)
+        st.session_state[f"{key_prefix}_sql_error"] = ""
+    except Exception as exc:
+        st.session_state[f"{key_prefix}_sql_result"] = None
+        st.session_state[f"{key_prefix}_sql_error"] = f"{type(exc).__name__}: {exc}"
+
+
 def render_sql_runner(default_sql="", key_prefix="sql_runner"):
     st.markdown("#### SQL Query Builder")
     editor_key = f"{key_prefix}_sql_editor"
     if editor_key not in st.session_state:
         st.session_state[editor_key] = default_sql
 
-    with st.form(key=f"{key_prefix}_form"):
-        sql = st.text_area("SQL", height=180, key=editor_key)
-        submitted = st.form_submit_button("Run Query", type="primary")
+    st.text_area("SQL", height=180, key=editor_key)
+    st.button(
+        "Run Query",
+        type="primary",
+        key=f"{key_prefix}_run_button",
+        on_click=run_sql_callback,
+        args=(key_prefix,),
+    )
 
-    if submitted:
-        try:
-            result = execute_sql_query(sql)
-            rows = result.get("rows", [])
-            st.success(f"Returned {len(rows)} rows.")
-            if rows:
-                st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
-            else:
-                st.info("Query ran successfully but returned no rows.")
-        except Exception as exc:
-            st.error(f"Query failed: {type(exc).__name__}: {exc}")
+    error = st.session_state.get(f"{key_prefix}_sql_error", "")
+    result = st.session_state.get(f"{key_prefix}_sql_result")
+    if error:
+        st.error(f"Query failed: {error}")
+    elif result:
+        rows = result.get("rows", [])
+        st.success(f"Returned {len(rows)} rows.")
+        if rows:
+            st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
+        else:
+            st.info("Query ran successfully but returned no rows.")
 
 
 def show_overview():
@@ -291,13 +306,6 @@ def show_chat():
             {"role": "assistant", "content": "Hello. Ask me a business question about the Zain Customer 360 database."}
         ]
 
-    if st.button("Clear Chat", key="clear_chat_button"):
-        st.session_state.messages = [
-            {"role": "assistant", "content": "Hello. Ask me a business question about the Zain Customer 360 database."}
-        ]
-        st.success("Chat cleared.")
-        st.rerun()
-
     for index, message in enumerate(st.session_state.messages):
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
@@ -305,8 +313,28 @@ def show_chat():
                 with st.expander("SQL Query"):
                     render_sql_runner(message["sql"], key_prefix=f"history_{index}")
 
-    prompt = st.chat_input("Ask a question about the Customer 360 database")
-    if prompt:
+    with st.form("chat_question_form", clear_on_submit=True):
+        prompt = st.text_area(
+            "Ask a question",
+            placeholder="Ask a question about the Customer 360 database",
+            height=90,
+            label_visibility="collapsed",
+        )
+        submit_col, clear_col = st.columns([3, 1])
+        with submit_col:
+            submitted = st.form_submit_button("Submit Question", type="primary", width="stretch")
+        with clear_col:
+            clear_chat = st.form_submit_button("Clear Chat", width="stretch")
+
+    if clear_chat:
+        st.session_state.messages = [
+            {"role": "assistant", "content": "Hello. Ask me a business question about the Zain Customer 360 database."}
+        ]
+        st.success("Chat cleared.")
+        st.rerun()
+
+    if submitted and prompt.strip():
+        prompt = prompt.strip()
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
@@ -356,7 +384,7 @@ with st.sidebar:
           <div class="sidebar-chips">
             <span class="sidebar-chip">SQL-backed</span>
             <span class="sidebar-chip">Charts</span>
-            <span class="sidebar-chip">Read-only</span>
+            <span class="sidebar-chip">Overview</span>
           </div>
         </div>
         """,
