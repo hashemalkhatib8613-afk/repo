@@ -129,6 +129,14 @@ def _table_exists(table_name):
     return row is not None
 
 
+def _get_table_columns(table_name):
+    with _connect() as conn:
+        return [
+            row["name"]
+            for row in conn.execute(f"PRAGMA table_info({table_name})")
+        ]
+
+
 def _schema_summary():
     with _connect() as conn:
         table_names = [
@@ -200,7 +208,6 @@ def validate_read_only_sql(sql):
 
 def _validate_chart_sql(sql):
     normalized = validate_read_only_sql(sql)
-
     lowered = normalized.lower()
 
     if " label" not in lowered and " as label" not in lowered:
@@ -231,7 +238,6 @@ def _is_grouped_query(sql):
 
 def execute_sql_query(sql, limit=50):
     sql = validate_read_only_sql(sql)
-
     limited_sql = sql
 
     if not _has_limit(sql) and not _is_grouped_query(sql):
@@ -488,11 +494,11 @@ def _customer_recent_complaints(customer_id, limit=5):
             complaint_id,
             complaint_date,
             complaint_category,
-            complaint_type,
+            complaint_description,
+            severity,
             status,
-            priority,
-            channel,
-            resolution_date
+            resolved_date,
+            compensation_amount_jod
         FROM complaints
         WHERE customer_id = ?
         ORDER BY complaint_date DESC
@@ -507,7 +513,7 @@ def _customer_recent_invoices(customer_id, limit=5):
         """
         SELECT
             i.invoice_id,
-            i.invoice_date,
+            i.issue_date,
             i.due_date,
             i.total_amount_jod,
             i.payment_status,
@@ -515,7 +521,7 @@ def _customer_recent_invoices(customer_id, limit=5):
         FROM invoices i
         JOIN accounts a ON i.account_id = a.account_id
         WHERE a.customer_id = ?
-        ORDER BY i.invoice_date DESC
+        ORDER BY i.issue_date DESC
         LIMIT ?
         """,
         (customer_id, limit),
