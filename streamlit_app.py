@@ -54,712 +54,741 @@ LOGO_DATA_URI = get_logo_data_uri()
 
 st.markdown(
     """
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-
-      :root {
-        --z-bg: #050713;
-        --z-bg-2: #080c1d;
-        --z-bg-3: #0d1326;
-        --z-sidebar: #070b1b;
-        --z-card: rgba(15, 23, 42, 0.88);
-        --z-card-2: rgba(18, 27, 52, 0.92);
-        --z-card-3: rgba(23, 34, 64, 0.94);
-        --z-border: rgba(255, 255, 255, 0.10);
-        --z-border-2: rgba(148, 163, 184, 0.20);
-        --z-text: #f8fafc;
-        --z-text-2: #dbeafe;
-        --z-muted: #94a3b8;
-        --z-muted-2: #64748b;
-        --z-purple: #7c3aed;
-        --z-purple-2: #a855f7;
-        --z-indigo: #4f46e5;
-        --z-blue: #38bdf8;
-        --z-orange: #f59e0b;
-        --z-danger: #fb7185;
-        --z-radius-lg: 26px;
-        --z-radius-md: 18px;
-        --z-shadow: 0 26px 80px rgba(0, 0, 0, 0.42);
-        --z-shadow-soft: 0 18px 46px rgba(0, 0, 0, 0.30);
-      }
-
-      html,
-      body,
-      [class*="css"],
-      [class*="st-"] {
-        font-family: "Inter", sans-serif !important;
-      }
-
-      html,
-      body {
-        background: var(--z-bg) !important;
-      }
-
-      .stApp,
-      [data-testid="stAppViewContainer"],
-      [data-testid="stAppViewContainer"] > .main,
-      .main,
-      section.main {
-        background:
-          radial-gradient(circle at 85% 6%, rgba(124, 58, 237, 0.22), transparent 32%),
-          radial-gradient(circle at 20% 12%, rgba(56, 189, 248, 0.08), transparent 28%),
-          linear-gradient(135deg, #050713 0%, #080c1d 48%, #050713 100%) !important;
-        color: var(--z-text) !important;
-      }
-
-      header[data-testid="stHeader"] {
-        background: transparent !important;
-      }
-
-      [data-testid="stToolbar"] {
-        color: var(--z-text) !important;
-      }
-
-      .block-container {
-        max-width: 1180px;
-        padding-top: 1.25rem !important;
-        padding-bottom: 8.5rem !important;
-        padding-left: 2rem !important;
-        padding-right: 2rem !important;
-      }
-
-      h1, h2, h3, h4, h5, h6 {
-        color: var(--z-text) !important;
-        letter-spacing: -0.035em;
-      }
-
-      p, span, li, label, div {
-        color: inherit;
-      }
-
-      /* ================================
-         SIDEBAR
-         ================================ */
-
-      section[data-testid="stSidebar"] {
-        width: 330px !important;
-        min-width: 330px !important;
-        background:
-          radial-gradient(circle at 20% 0%, rgba(124, 58, 237, 0.20), transparent 32%),
-          linear-gradient(180deg, #080d1f 0%, #050713 100%) !important;
-        border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
-      }
-
-      section[data-testid="stSidebar"] > div {
-        padding: 1rem 0.85rem !important;
-        background: transparent !important;
-      }
-
-      section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {
-        min-height: calc(100vh - 2rem);
-        border-radius: 26px;
-        padding: 1.05rem 0.95rem 1.2rem;
-        background:
-          radial-gradient(circle at 24% 3%, rgba(168, 85, 247, 0.20), transparent 30%),
-          linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(8, 13, 29, 0.98)) !important;
-        border: 1px solid rgba(255, 255, 255, 0.10);
-        box-shadow: var(--z-shadow);
-        backdrop-filter: blur(18px);
-      }
-
-      .sidebar-brand-card {
-        position: relative;
-        overflow: hidden;
-        border-radius: 24px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        background:
-          radial-gradient(circle at 82% 14%, rgba(168, 85, 247, 0.30), transparent 32%),
-          linear-gradient(135deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.045));
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.30);
-      }
-
-      .sidebar-brand-card::after {
-        content: "";
-        position: absolute;
-        width: 130px;
-        height: 130px;
-        right: -55px;
-        bottom: -65px;
-        border-radius: 999px;
-        background: rgba(79, 70, 229, 0.22);
-      }
-
-      .sidebar-brand-top {
-        position: relative;
-        z-index: 2;
-        display: flex;
-        align-items: center;
-        gap: 0.7rem;
-        margin-bottom: 0.7rem;
-      }
-
-      .sidebar-brand-icon {
-        width: 42px;
-        height: 42px;
-        min-width: 42px;
-        border-radius: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #ffffff;
-        font-weight: 900;
-        font-size: 0.92rem;
-        background: linear-gradient(135deg, var(--z-purple), var(--z-indigo));
-        box-shadow: 0 14px 34px rgba(124, 58, 237, 0.36);
-      }
-
-      .sidebar-brand-title {
-        color: var(--z-text);
-        font-size: 0.98rem;
-        font-weight: 900;
-        letter-spacing: -0.02em;
-        line-height: 1.15;
-      }
-
-      .sidebar-brand-subtitle {
-        color: #c4b5fd;
-        font-size: 0.72rem;
-        font-weight: 700;
-        margin-top: 0.1rem;
-      }
-
-      .sidebar-brand-copy {
-        position: relative;
-        z-index: 2;
-        color: var(--z-text-2);
-        font-size: 0.76rem;
-        line-height: 1.55;
-      }
-
-      .sidebar-section-label {
-        color: #a5b4fc;
-        font-size: 0.68rem;
-        font-weight: 900;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        margin: 1.15rem 0 0.55rem 0.2rem;
-      }
-
-      .sidebar-line {
-        height: 1px;
-        margin: 1rem 0;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
-      }
-
-      .sidebar-footnote {
-        margin-top: 1.15rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.09);
-        padding-top: 0.9rem;
-        color: var(--z-muted);
-        font-size: 0.72rem;
-        line-height: 1.5;
-      }
-
-      section[data-testid="stSidebar"] details {
-        border: 1px solid rgba(255, 255, 255, 0.10) !important;
-        border-radius: 18px !important;
-        background: rgba(255, 255, 255, 0.045) !important;
-        overflow: hidden !important;
-      }
-
-      section[data-testid="stSidebar"] details summary {
-        color: var(--z-text) !important;
-        font-weight: 800;
-        font-size: 0.88rem;
-        padding: 0.72rem 0.8rem !important;
-        background: rgba(255, 255, 255, 0.045) !important;
-      }
-
-      section[data-testid="stSidebar"] div.stButton > button {
-        width: 100%;
-        min-height: 44px;
-        border-radius: 16px;
-        border: 1px solid transparent;
-        background: transparent;
-        color: #cbd5e1;
-        font-weight: 760;
-        font-size: 0.84rem;
-        text-align: left;
-        justify-content: flex-start;
-        padding: 0.6rem 0.78rem;
-        box-shadow: none;
-        transition: all 0.16s ease;
-      }
-
-      section[data-testid="stSidebar"] div.stButton > button:hover {
-        background: rgba(255, 255, 255, 0.075);
-        border-color: rgba(255, 255, 255, 0.10);
-        color: #ffffff;
-        transform: none;
-      }
-
-      section[data-testid="stSidebar"] div.stButton > button[kind="primary"] {
-        background: linear-gradient(135deg, rgba(124, 58, 237, 0.95), rgba(79, 70, 229, 0.95)) !important;
-        border-color: rgba(255, 255, 255, 0.14) !important;
-        color: #ffffff !important;
-        box-shadow: 0 14px 34px rgba(124, 58, 237, 0.28) !important;
-      }
-
-      section[data-testid="stSidebar"] [class*="st-key-sidebar_new_chat"] button {
-        background: linear-gradient(135deg, var(--z-purple), var(--z-indigo)) !important;
-        color: #ffffff !important;
-        justify-content: center !important;
-        text-align: center !important;
-        min-height: 46px !important;
-        border-radius: 18px !important;
-        box-shadow: 0 18px 36px rgba(124, 58, 237, 0.30) !important;
-      }
-
-      section[data-testid="stSidebar"] [class*="st-key-sidebar_search_fake"] button {
-        background: rgba(255, 255, 255, 0.09) !important;
-        color: #ffffff !important;
-        border-radius: 16px !important;
-        min-height: 46px !important;
-        padding: 0 !important;
-        justify-content: center !important;
-        text-align: center !important;
-      }
-
-      /* ================================
-         SIDEBAR CHAT ITEMS
-         ================================ */
-
-      section[data-testid="stSidebar"] [class*="st-key-chat_item_"] {
-        border-radius: 16px;
-        padding: 0.15rem 0.35rem;
-        margin-bottom: 0.3rem;
-        background: transparent;
-      }
-
-      section[data-testid="stSidebar"] [class*="st-key-chat_item_"] div[data-testid="stHorizontalBlock"] {
-        align-items: center;
-        gap: 0.06rem;
-      }
-
-      section[data-testid="stSidebar"] [class*="st-key-chat_select_wrap_"] div.stButton > button {
-        width: 100% !important;
-        min-height: 40px !important;
-        border-radius: 14px !important;
-        padding: 0.5rem 0.62rem !important;
-        font-size: 0.79rem !important;
-        color: #cbd5e1 !important;
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        overflow: hidden;
-      }
-
-      section[data-testid="stSidebar"] [class*="st-key-chat_select_wrap_"] div.stButton > button:hover {
-        background: rgba(255, 255, 255, 0.06) !important;
-        color: #ffffff !important;
-      }
-
-      section[data-testid="stSidebar"] [class*="st-key-chat_select_wrap_"] div.stButton > button[kind="primary"] {
-        color: #ffffff !important;
-        background: rgba(124, 58, 237, 0.30) !important;
-        border: 1px solid rgba(168, 85, 247, 0.28) !important;
-        box-shadow: none !important;
-      }
-
-      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"],
-      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] div,
-      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] div.stButton {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-      }
-
-      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button,
-      section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button {
-        width: 24px !important;
-        min-width: 24px !important;
-        height: 24px !important;
-        min-height: 24px !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        background: transparent !important;
-        background-color: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        color: #94a3b8 !important;
-        font-size: 1rem !important;
-        font-weight: 900 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-      }
-
-      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button:hover,
-      section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button:hover {
-        background: transparent !important;
-        color: #ffffff !important;
-        transform: none !important;
-      }
-
-      section[data-testid="stSidebar"] [class*="st-key-chat_actions_wrap_"] {
-        margin: 0.25rem 0 0.35rem 0.45rem;
-      }
-
-      section[data-testid="stSidebar"] [class*="st-key-chat_actions_wrap_"] div.stButton > button {
-        min-height: 32px !important;
-        border-radius: 12px !important;
-        padding: 0.35rem 0.55rem !important;
-        font-size: 0.74rem !important;
-        justify-content: center !important;
-        text-align: center !important;
-        background: rgba(255, 255, 255, 0.075) !important;
-        border: 1px solid rgba(255, 255, 255, 0.09) !important;
-      }
-
-      section[data-testid="stSidebar"] [class*="st-key-chat_rename_wrap_"] {
-        margin-top: 0.35rem;
-      }
-
-      section[data-testid="stSidebar"] [class*="st-key-chat_rename_wrap_"] input {
-        min-height: 38px;
-        border-radius: 14px;
-      }
-
-      /* ================================
-         MAIN HEADER / BANNER
-         ================================ */
-
-      .page-brand-card {
-        position: relative;
-        width: 100%;
-        min-height: 160px;
-        border-radius: 30px;
-        padding: 1.65rem 1.75rem;
-        margin-bottom: 1.35rem;
-        overflow: hidden;
-        background:
-          radial-gradient(circle at 82% 50%, rgba(124, 58, 237, 0.33), transparent 30%),
-          radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.13), transparent 30%),
-          linear-gradient(135deg, rgba(18, 25, 47, 0.96), rgba(15, 23, 42, 0.86)) !important;
-        border: 1px solid var(--z-border);
-        box-shadow: var(--z-shadow-soft);
-        backdrop-filter: blur(20px);
-      }
-
-      .page-brand-card::before {
-        content: "";
-        position: absolute;
-        right: -90px;
-        top: -100px;
-        width: 280px;
-        height: 280px;
-        border-radius: 999px;
-        background: rgba(168, 85, 247, 0.15);
-      }
-
-      .page-brand-card::after {
-        content: "";
-        position: absolute;
-        right: 140px;
-        bottom: -130px;
-        width: 260px;
-        height: 260px;
-        border-radius: 999px;
-        background: rgba(79, 70, 229, 0.13);
-      }
-
-      .page-brand-content {
-        position: relative;
-        z-index: 2;
-        max-width: 820px;
-      }
-
-      .page-brand-eyebrow {
-        color: #c4b5fd;
-        font-size: 0.74rem;
-        font-weight: 900;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        margin-bottom: 0.46rem;
-      }
-
-      .page-brand-title {
-        color: #ffffff !important;
-        font-size: 2.05rem;
-        font-weight: 900;
-        letter-spacing: -0.05em;
-        line-height: 1.08;
-        margin-bottom: 0.55rem;
-      }
-
-      .page-brand-copy {
-        color: #cbd5e1;
-        font-size: 0.95rem;
-        line-height: 1.62;
-        max-width: 760px;
-      }
-
-      .page-brand-logo {
-        position: absolute;
-        z-index: 3;
-        right: 1.7rem;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 145px;
-        max-width: 145px;
-        height: auto;
-        object-fit: contain;
-        opacity: 0.18;
-        filter: grayscale(1) brightness(1.8);
-      }
-
-      /* ================================
-         MAIN CONTENT
-         ================================ */
-
-      div[data-testid="stMetric"] {
-        background: var(--z-card-2) !important;
-        border: 1px solid var(--z-border);
-        border-radius: 22px;
-        padding: 18px;
-        box-shadow: var(--z-shadow-soft);
-        backdrop-filter: blur(16px);
-      }
-
-      div[data-testid="stMetric"] label {
-        color: var(--z-muted) !important;
-        font-weight: 700 !important;
-      }
-
-      div[data-testid="stMetricValue"] {
-        color: #ffffff !important;
-        font-weight: 900 !important;
-      }
-
-      .stPlotlyChart {
-        background: var(--z-card-2) !important;
-        border: 1px solid var(--z-border);
-        border-radius: 26px;
-        padding: 1rem;
-        box-shadow: var(--z-shadow-soft);
-      }
-
-      div[data-testid="stDataFrame"] {
-        border-radius: 22px;
-        overflow: hidden;
-        border: 1px solid var(--z-border);
-        box-shadow: var(--z-shadow-soft);
-      }
-
-      div[data-testid="stExpander"] {
-        border: 1px solid var(--z-border) !important;
-        border-radius: 20px !important;
-        background: rgba(15, 23, 42, 0.92) !important;
-        box-shadow: var(--z-shadow-soft);
-        overflow: hidden;
-      }
-
-      div[data-testid="stExpander"] summary {
-        color: var(--z-text) !important;
-        font-weight: 800 !important;
-      }
-
-      div[data-testid="stCodeBlock"] {
-        border-radius: 18px;
-        border: 1px solid var(--z-border);
-        overflow: hidden;
-      }
-
-      div[data-testid="stAlert"] {
-        border-radius: 18px;
-      }
-
-      /* ================================
-         CHAT AREA
-         ================================ */
-
-      div[data-testid="stChatMessage"] {
-        background: transparent !important;
-        padding: 0.45rem 0;
-      }
-
-      div[data-testid="stChatMessageContent"] {
-        color: var(--z-text-2);
-        font-size: 0.94rem;
-        line-height: 1.68;
-      }
-
-      div[data-testid="stChatMessageContent"] p {
-        margin-bottom: 0.75rem;
-      }
-
-      div[data-testid="stChatMessage"] [data-testid="chatAvatarIcon-assistant"] {
-        background: linear-gradient(135deg, var(--z-purple), var(--z-indigo)) !important;
-      }
-
-      div[data-testid="stChatMessage"] [data-testid="chatAvatarIcon-user"] {
-        background: rgba(255, 255, 255, 0.12) !important;
-        color: #ffffff;
-      }
-
-      /* ================================
-         FORMS / BUTTONS
-         ================================ */
-
-      textarea,
-      input {
-        border-radius: 18px !important;
-        border-color: rgba(255, 255, 255, 0.12) !important;
-        background: rgba(15, 23, 42, 0.86) !important;
-        color: var(--z-text) !important;
-      }
-
-      textarea:focus,
-      input:focus {
-        border-color: rgba(168, 85, 247, 0.78) !important;
-        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.14) !important;
-      }
-
-      .main div.stButton > button {
-        width: auto;
-        min-height: 42px;
-        border-radius: 16px;
-        border: 1px solid var(--z-border);
-        background: rgba(15, 23, 42, 0.92);
-        color: var(--z-text);
-        font-weight: 800;
-        justify-content: center;
-        text-align: center;
-        padding: 0.58rem 0.95rem;
-        box-shadow: var(--z-shadow-soft);
-      }
-
-      .main div.stButton > button:hover {
-        border-color: rgba(168, 85, 247, 0.6);
-        color: #ffffff;
-        background: rgba(30, 41, 59, 0.96);
-        transform: translateY(-1px);
-      }
-
-      .main div.stButton > button[kind="primary"] {
-        background: linear-gradient(135deg, var(--z-purple), var(--z-indigo)) !important;
-        color: #ffffff !important;
-        border-color: rgba(255, 255, 255, 0.14) !important;
-        box-shadow: 0 16px 32px rgba(124, 58, 237, 0.26) !important;
-      }
-
-      /* ================================
-         FIXED CHAT INPUT
-         ================================ */
-
-      .st-key-fixed_chat_bar {
-        position: fixed;
-        left: calc(330px + 50%);
-        transform: translateX(-50%);
-        bottom: 1.35rem;
-        z-index: 1001;
-        width: min(780px, calc(100vw - 450px));
-        border: 1px solid rgba(255, 255, 255, 0.13);
-        border-radius: 999px;
-        padding: 0.44rem 0.48rem 0.44rem 1rem;
-        background: rgba(15, 23, 42, 0.94) !important;
-        box-shadow: 0 26px 70px rgba(0, 0, 0, 0.50);
-        backdrop-filter: blur(22px);
-      }
-
-      .st-key-fixed_chat_bar [data-testid="stForm"] {
-        border: 0;
-        padding: 0;
-        background: transparent !important;
-      }
-
-      .st-key-fixed_chat_bar div[data-testid="stHorizontalBlock"] {
-        align-items: center;
-        gap: 0.5rem;
-      }
-
-      .st-key-fixed_chat_bar div[data-testid="column"] {
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-      }
-
-      .st-key-fixed_chat_bar input {
-        border: 0 !important;
-        min-height: 48px;
-        background: transparent !important;
-        box-shadow: none !important;
-        font-size: 0.88rem !important;
-        color: #ffffff !important;
-      }
-
-      .st-key-fixed_chat_bar input::placeholder {
-        color: #94a3b8 !important;
-      }
-
-      .st-key-fixed_chat_bar input:focus {
-        border: 0 !important;
-        box-shadow: none !important;
-        outline: none !important;
-      }
-
-      .st-key-fixed_chat_bar button {
-        width: 48px !important;
-        min-width: 48px !important;
-        height: 48px !important;
-        min-height: 48px !important;
-        border-radius: 999px !important;
-        padding: 0 !important;
-        justify-content: center !important;
-        align-items: center !important;
-        text-align: center !important;
-        background: linear-gradient(135deg, var(--z-purple), var(--z-indigo)) !important;
-        color: #ffffff !important;
-        border: 0 !important;
-        box-shadow: 0 14px 30px rgba(124, 58, 237, 0.34) !important;
-        font-size: 0 !important;
-      }
-
-      .st-key-fixed_chat_bar button::after {
-        content: "➜";
-        font-size: 1.1rem;
-        line-height: 1;
-      }
-
-      @media (max-width: 900px) {
-        section[data-testid="stSidebar"] {
-          width: auto !important;
-          min-width: auto !important;
-        }
-
-        .block-container {
-          padding-left: 1rem !important;
-          padding-right: 1rem !important;
-        }
-
-        .st-key-fixed_chat_bar {
-          left: 1rem;
-          right: 1rem;
-          transform: none;
-          width: auto;
-        }
-
-        .page-brand-card {
-          padding: 1.25rem;
-          min-height: auto;
-        }
-
-        .page-brand-logo {
-          position: relative;
-          top: auto;
-          right: auto;
-          transform: none;
-          display: block;
-          width: 92px;
-          margin-top: 1rem;
-        }
-
-        .page-brand-title {
-          font-size: 1.48rem;
-        }
-      }
-    </style>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+/* =========================================================
+   GLOBAL DARK THEME RESET
+   ========================================================= */
+
+:root {
+  --bg-main: #060916;
+  --bg-main-2: #080d1f;
+  --bg-sidebar: #070b1b;
+  --bg-card: rgba(15, 23, 42, 0.88);
+  --bg-card-soft: rgba(18, 27, 52, 0.76);
+  --bg-card-hover: rgba(30, 41, 70, 0.92);
+
+  --border-soft: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(168, 85, 247, 0.35);
+
+  --text-main: #f8fafc;
+  --text-soft: #dbeafe;
+  --text-muted: #94a3b8;
+  --text-faint: #64748b;
+
+  --purple: #7c3aed;
+  --purple-light: #a855f7;
+  --indigo: #4f46e5;
+  --blue: #38bdf8;
+
+  --radius-xl: 28px;
+  --radius-lg: 22px;
+  --radius-md: 16px;
+
+  --shadow-main: 0 28px 80px rgba(0, 0, 0, 0.48);
+  --shadow-card: 0 18px 44px rgba(0, 0, 0, 0.32);
+  --shadow-purple: 0 18px 42px rgba(124, 58, 237, 0.30);
+}
+
+html,
+body,
+.stApp,
+[data-testid="stAppViewContainer"],
+[data-testid="stAppViewContainer"] > .main {
+  background:
+    radial-gradient(circle at 85% 4%, rgba(124, 58, 237, 0.22), transparent 30%),
+    radial-gradient(circle at 18% 10%, rgba(56, 189, 248, 0.09), transparent 26%),
+    linear-gradient(135deg, #050713 0%, #080d1f 48%, #050713 100%) !important;
+  color: var(--text-main) !important;
+  font-family: "Inter", sans-serif !important;
+}
+
+* {
+  font-family: "Inter", sans-serif !important;
+}
+
+header[data-testid="stHeader"] {
+  background: transparent !important;
+}
+
+[data-testid="stToolbar"] {
+  color: var(--text-main) !important;
+}
+
+.block-container {
+  max-width: 1180px !important;
+  padding-top: 1.4rem !important;
+  padding-bottom: 8.5rem !important;
+  padding-left: 2rem !important;
+  padding-right: 2rem !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--text-main) !important;
+  letter-spacing: -0.035em !important;
+}
+
+p,
+span,
+li,
+label,
+div {
+  color: inherit;
+}
+
+/* =========================================================
+   SIDEBAR BASE
+   ========================================================= */
+
+section[data-testid="stSidebar"] {
+  width: 330px !important;
+  min-width: 330px !important;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(124, 58, 237, 0.20), transparent 34%),
+    linear-gradient(180deg, #080d1f 0%, #050713 100%) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+section[data-testid="stSidebar"] > div {
+  padding: 1rem 0.85rem !important;
+  background: transparent !important;
+}
+
+section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+  min-height: calc(100vh - 2rem) !important;
+  padding: 1.05rem 0.95rem 1.2rem !important;
+  border-radius: 28px !important;
+  background:
+    radial-gradient(circle at 22% 0%, rgba(168, 85, 247, 0.20), transparent 32%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(7, 11, 27, 0.98)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  box-shadow: var(--shadow-main) !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+/* =========================================================
+   SIDEBAR BRAND CARD
+   ========================================================= */
+
+.sidebar-brand-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background:
+    radial-gradient(circle at 84% 12%, rgba(168, 85, 247, 0.32), transparent 34%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.045));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.30);
+}
+
+.sidebar-brand-card::after {
+  content: "";
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  right: -65px;
+  bottom: -72px;
+  border-radius: 999px;
+  background: rgba(79, 70, 229, 0.25);
+}
+
+.sidebar-brand-top {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.72rem;
+  margin-bottom: 0.72rem;
+}
+
+.sidebar-brand-icon {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: 900;
+  font-size: 0.92rem;
+  background: linear-gradient(135deg, var(--purple), var(--indigo));
+  box-shadow: var(--shadow-purple);
+}
+
+.sidebar-brand-title {
+  color: #ffffff;
+  font-size: 0.98rem;
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.sidebar-brand-subtitle {
+  color: #c4b5fd;
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-top: 0.1rem;
+}
+
+.sidebar-brand-copy {
+  position: relative;
+  z-index: 2;
+  color: var(--text-soft);
+  font-size: 0.76rem;
+  line-height: 1.55;
+}
+
+/* =========================================================
+   SIDEBAR LABELS / SEPARATORS
+   ========================================================= */
+
+.sidebar-section-label {
+  color: #a5b4fc;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin: 1.15rem 0 0.55rem 0.2rem;
+}
+
+.sidebar-line {
+  height: 1px;
+  margin: 1rem 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.14),
+    transparent
+  );
+}
+
+.sidebar-footnote {
+  margin-top: 1.15rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   SIDEBAR BUTTONS
+   ========================================================= */
+
+section[data-testid="stSidebar"] div.stButton > button {
+  width: 100% !important;
+  min-height: 44px !important;
+  border-radius: 16px !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: #cbd5e1 !important;
+  font-weight: 750 !important;
+  font-size: 0.84rem !important;
+  text-align: left !important;
+  justify-content: flex-start !important;
+  padding: 0.6rem 0.78rem !important;
+  box-shadow: none !important;
+  transition: all 0.16s ease !important;
+}
+
+section[data-testid="stSidebar"] div.stButton > button:hover {
+  background: rgba(255, 255, 255, 0.075) !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+  color: #ffffff !important;
+  transform: none !important;
+}
+
+section[data-testid="stSidebar"] div.stButton > button[kind="primary"] {
+  background: linear-gradient(135deg, var(--purple), var(--indigo)) !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  color: #ffffff !important;
+  box-shadow: var(--shadow-purple) !important;
+}
+
+section[data-testid="stSidebar"] [class*="st-key-sidebar_new_chat"] button {
+  background: linear-gradient(135deg, var(--purple), var(--indigo)) !important;
+  color: #ffffff !important;
+  justify-content: center !important;
+  text-align: center !important;
+  min-height: 46px !important;
+  border-radius: 18px !important;
+  box-shadow: var(--shadow-purple) !important;
+}
+
+section[data-testid="stSidebar"] [class*="st-key-sidebar_search_fake"] button {
+  background: rgba(255, 255, 255, 0.09) !important;
+  color: #ffffff !important;
+  border-radius: 16px !important;
+  min-height: 46px !important;
+  padding: 0 !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+/* =========================================================
+   CHAT EXPANDER IN SIDEBAR
+   ========================================================= */
+
+section[data-testid="stSidebar"] details {
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  border-radius: 18px !important;
+  background: rgba(255, 255, 255, 0.045) !important;
+  overflow: hidden !important;
+}
+
+section[data-testid="stSidebar"] details summary {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  font-size: 0.88rem !important;
+  padding: 0.72rem 0.8rem !important;
+  background: rgba(255, 255, 255, 0.045) !important;
+}
+
+/* =========================================================
+   SIDEBAR CHAT ITEMS
+   ========================================================= */
+
+section[data-testid="stSidebar"] [class*="st-key-chat_item_"] {
+  border-radius: 16px !important;
+  padding: 0.15rem 0.35rem !important;
+  margin-bottom: 0.3rem !important;
+  background: transparent !important;
+}
+
+section[data-testid="stSidebar"] [class*="st-key-chat_item_"] div[data-testid="stHorizontalBlock"] {
+  align-items: center !important;
+  gap: 0.06rem !important;
+}
+
+section[data-testid="stSidebar"] [class*="st-key-chat_select_wrap_"] div.stButton > button {
+  width: 100% !important;
+  min-height: 40px !important;
+  border-radius: 14px !important;
+  padding: 0.5rem 0.62rem !important;
+  font-size: 0.79rem !important;
+  color: #cbd5e1 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+section[data-testid="stSidebar"] [class*="st-key-chat_select_wrap_"] div.stButton > button:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: #ffffff !important;
+}
+
+section[data-testid="stSidebar"] [class*="st-key-chat_select_wrap_"] div.stButton > button[kind="primary"] {
+  color: #ffffff !important;
+  background: rgba(124, 58, 237, 0.30) !important;
+  border: 1px solid rgba(168, 85, 247, 0.28) !important;
+  box-shadow: none !important;
+}
+
+section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"],
+section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] div,
+section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] div.stButton {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button,
+section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button {
+  width: 24px !important;
+  min-width: 24px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #94a3b8 !important;
+  font-size: 1rem !important;
+  font-weight: 900 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button:hover,
+section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button:hover {
+  background: transparent !important;
+  color: #ffffff !important;
+}
+
+section[data-testid="stSidebar"] [class*="st-key-chat_actions_wrap_"] {
+  margin: 0.25rem 0 0.35rem 0.45rem !important;
+}
+
+section[data-testid="stSidebar"] [class*="st-key-chat_actions_wrap_"] div.stButton > button {
+  min-height: 32px !important;
+  border-radius: 12px !important;
+  padding: 0.35rem 0.55rem !important;
+  font-size: 0.74rem !important;
+  justify-content: center !important;
+  text-align: center !important;
+  background: rgba(255, 255, 255, 0.075) !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+}
+
+section[data-testid="stSidebar"] [class*="st-key-chat_rename_wrap_"] input {
+  min-height: 38px !important;
+  border-radius: 14px !important;
+}
+
+/* =========================================================
+   MAIN HEADER / BANNER
+   ========================================================= */
+
+.page-brand-card {
+  position: relative;
+  width: 100%;
+  min-height: 160px;
+  border-radius: 30px;
+  padding: 1.65rem 1.75rem;
+  margin-bottom: 1.35rem;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 82% 50%, rgba(124, 58, 237, 0.33), transparent 30%),
+    radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.13), transparent 30%),
+    linear-gradient(135deg, rgba(18, 25, 47, 0.96), rgba(15, 23, 42, 0.86)) !important;
+  border: 1px solid var(--border-soft);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(20px);
+}
+
+.page-brand-card::before {
+  content: "";
+  position: absolute;
+  right: -90px;
+  top: -100px;
+  width: 280px;
+  height: 280px;
+  border-radius: 999px;
+  background: rgba(168, 85, 247, 0.15);
+}
+
+.page-brand-card::after {
+  content: "";
+  position: absolute;
+  right: 140px;
+  bottom: -130px;
+  width: 260px;
+  height: 260px;
+  border-radius: 999px;
+  background: rgba(79, 70, 229, 0.13);
+}
+
+.page-brand-content {
+  position: relative;
+  z-index: 2;
+  max-width: 820px;
+}
+
+.page-brand-eyebrow {
+  color: #c4b5fd;
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 0.46rem;
+}
+
+.page-brand-title {
+  color: #ffffff !important;
+  font-size: 2.05rem;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  line-height: 1.08;
+  margin-bottom: 0.55rem;
+}
+
+.page-brand-copy {
+  color: #cbd5e1;
+  font-size: 0.95rem;
+  line-height: 1.62;
+  max-width: 760px;
+}
+
+.page-brand-logo {
+  position: absolute;
+  z-index: 3;
+  right: 1.7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 145px;
+  max-width: 145px;
+  height: auto;
+  object-fit: contain;
+  opacity: 0.18;
+  filter: grayscale(1) brightness(1.8);
+}
+
+/* =========================================================
+   MAIN CONTENT CARDS / CHARTS / TABLES
+   ========================================================= */
+
+div[data-testid="stMetric"] {
+  background: var(--bg-card-soft) !important;
+  border: 1px solid var(--border-soft) !important;
+  border-radius: 22px !important;
+  padding: 18px !important;
+  box-shadow: var(--shadow-card) !important;
+  backdrop-filter: blur(16px) !important;
+}
+
+div[data-testid="stMetric"] label {
+  color: var(--text-muted) !important;
+  font-weight: 700 !important;
+}
+
+div[data-testid="stMetricValue"] {
+  color: #ffffff !important;
+  font-weight: 900 !important;
+}
+
+.stPlotlyChart {
+  background: var(--bg-card-soft) !important;
+  border: 1px solid var(--border-soft) !important;
+  border-radius: 26px !important;
+  padding: 1rem !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+div[data-testid="stDataFrame"] {
+  border-radius: 22px !important;
+  overflow: hidden !important;
+  border: 1px solid var(--border-soft) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+div[data-testid="stExpander"] {
+  border: 1px solid var(--border-soft) !important;
+  border-radius: 20px !important;
+  background: rgba(15, 23, 42, 0.92) !important;
+  box-shadow: var(--shadow-card) !important;
+  overflow: hidden !important;
+}
+
+div[data-testid="stExpander"] summary {
+  color: var(--text-main) !important;
+  font-weight: 800 !important;
+}
+
+div[data-testid="stCodeBlock"] {
+  border-radius: 18px !important;
+  border: 1px solid var(--border-soft) !important;
+  overflow: hidden !important;
+}
+
+div[data-testid="stAlert"] {
+  border-radius: 18px !important;
+}
+
+/* =========================================================
+   CHAT AREA
+   ========================================================= */
+
+div[data-testid="stChatMessage"] {
+  background: transparent !important;
+  padding: 0.45rem 0 !important;
+}
+
+div[data-testid="stChatMessageContent"] {
+  color: var(--text-soft) !important;
+  font-size: 0.94rem !important;
+  line-height: 1.68 !important;
+}
+
+div[data-testid="stChatMessageContent"] p {
+  margin-bottom: 0.75rem !important;
+}
+
+div[data-testid="stChatMessage"] [data-testid="chatAvatarIcon-assistant"] {
+  background: linear-gradient(135deg, var(--purple), var(--indigo)) !important;
+}
+
+div[data-testid="stChatMessage"] [data-testid="chatAvatarIcon-user"] {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+}
+
+/* =========================================================
+   INPUTS / BUTTONS
+   ========================================================= */
+
+textarea,
+input {
+  border-radius: 18px !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(15, 23, 42, 0.86) !important;
+  color: var(--text-main) !important;
+}
+
+textarea:focus,
+input:focus {
+  border-color: rgba(168, 85, 247, 0.78) !important;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.14) !important;
+}
+
+.main div.stButton > button {
+  width: auto;
+  min-height: 42px;
+  border-radius: 16px;
+  border: 1px solid var(--border-soft);
+  background: rgba(15, 23, 42, 0.92);
+  color: var(--text-main);
+  font-weight: 800;
+  justify-content: center;
+  text-align: center;
+  padding: 0.58rem 0.95rem;
+  box-shadow: var(--shadow-card);
+}
+
+.main div.stButton > button:hover {
+  border-color: rgba(168, 85, 247, 0.6);
+  color: #ffffff;
+  background: rgba(30, 41, 59, 0.96);
+  transform: translateY(-1px);
+}
+
+.main div.stButton > button[kind="primary"] {
+  background: linear-gradient(135deg, var(--purple), var(--indigo)) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  box-shadow: var(--shadow-purple) !important;
+}
+
+/* =========================================================
+   FIXED CHAT INPUT BAR
+   ========================================================= */
+
+.st-key-fixed_chat_bar {
+  position: fixed;
+  left: calc(330px + 50%);
+  transform: translateX(-50%);
+  bottom: 1.35rem;
+  z-index: 1001;
+  width: min(780px, calc(100vw - 450px));
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 999px;
+  padding: 0.44rem 0.48rem 0.44rem 1rem;
+  background: rgba(15, 23, 42, 0.94) !important;
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.50);
+  backdrop-filter: blur(22px);
+}
+
+.st-key-fixed_chat_bar [data-testid="stForm"] {
+  border: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.st-key-fixed_chat_bar div[data-testid="stHorizontalBlock"] {
+  align-items: center !important;
+  gap: 0.5rem !important;
+}
+
+.st-key-fixed_chat_bar div[data-testid="column"] {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.st-key-fixed_chat_bar input {
+  border: 0 !important;
+  min-height: 48px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 0.88rem !important;
+  color: #ffffff !important;
+}
+
+.st-key-fixed_chat_bar input::placeholder {
+  color: #94a3b8 !important;
+}
+
+.st-key-fixed_chat_bar input:focus {
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.st-key-fixed_chat_bar button {
+  width: 48px !important;
+  min-width: 48px !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  border-radius: 999px !important;
+  padding: 0 !important;
+  justify-content: center !important;
+  align-items: center !important;
+  text-align: center !important;
+  background: linear-gradient(135deg, var(--purple), var(--indigo)) !important;
+  color: #ffffff !important;
+  border: 0 !important;
+  box-shadow: 0 14px 30px rgba(124, 58, 237, 0.34) !important;
+  font-size: 0 !important;
+}
+
+.st-key-fixed_chat_bar button::after {
+  content: "➜";
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 900px) {
+  section[data-testid="stSidebar"] {
+    width: auto !important;
+    min-width: auto !important;
+  }
+
+  .block-container {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .st-key-fixed_chat_bar {
+    left: 1rem;
+    right: 1rem;
+    transform: none;
+    width: auto;
+  }
+
+  .page-brand-card {
+    padding: 1.25rem;
+    min-height: auto;
+  }
+
+  .page-brand-logo {
+    position: relative;
+    top: auto;
+    right: auto;
+    transform: none;
+    display: block;
+    width: 92px;
+    margin-top: 1rem;
+  }
+
+  .page-brand-title {
+    font-size: 1.48rem;
+  }
+}
+</style>
     """,
     unsafe_allow_html=True,
 )
