@@ -264,6 +264,8 @@ def answer_direct_query(question):
     limit_match = re.search(r"\btop\s+(\d+)|\blimit\s+(\d+)", q)
     limit = int(next(value for value in limit_match.groups() if value)) if limit_match else 10
     limit = max(1, min(limit, 25))
+    customer_match = re.search(r"\bcustomer(?:\s+with)?\s+id\s*=?\s*(\d+)|\bcustomer_id\s*=?\s*(\d+)|\bid\s*=\s*(\d+)", q)
+    customer_id = int(next(value for value in customer_match.groups() if value)) if customer_match else None
 
     if "how many" in q and "customer" in q:
         sql = "SELECT COUNT(*) AS total_customers FROM customers"
@@ -304,6 +306,34 @@ LIMIT ?
         return {"answer": answer, "sql": sql.replace("?", str(limit))}
 
     if "complaint" in q:
+        if customer_id is not None:
+            sql = """
+SELECT
+    complaint_category,
+    COUNT(*) AS total_complaints
+FROM complaints
+WHERE customer_id = ?
+GROUP BY complaint_category
+ORDER BY total_complaints DESC
+""".strip()
+            rows = _run_rows(sql, (customer_id,))
+            customer = _run_rows("SELECT full_name FROM customers WHERE customer_id = ?", (customer_id,))
+            if not customer:
+                return {
+                    "answer": f"Direct Answer\nNo customer was found with customer_id = {customer_id}.",
+                    "sql": f"SELECT full_name FROM customers WHERE customer_id = {customer_id}",
+                }
+            customer_name = customer[0]["full_name"]
+            if not rows:
+                return {
+                    "answer": f"Direct Answer\nNo complaint records were found for {customer_name} with customer_id = {customer_id}.",
+                    "sql": sql.replace("?", str(customer_id)),
+                }
+            return {
+                "answer": f"Direct Answer\nComplaint types for {customer_name} with customer_id = {customer_id}:\n\n" + _rows_to_markdown(rows),
+                "sql": sql.replace("?", str(customer_id)),
+            }
+
         sql = """
 SELECT complaint_category, COUNT(*) AS total_complaints
 FROM complaints
