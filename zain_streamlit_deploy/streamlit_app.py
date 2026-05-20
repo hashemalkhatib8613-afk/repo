@@ -319,6 +319,78 @@ st.markdown(
       div[data-testid="stAlert"] {
         border-radius: 10px;
       }
+
+      /* FINAL FORCE FIX - Remove 3 dots button background completely */
+section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"],
+section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] div,
+section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] div.stButton {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Target the actual 3 dots button */
+section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button,
+section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button,
+section[data-testid="stSidebar"] button[kind="secondary"][title="Chat options"] {
+  width: 28px !important;
+  min-width: 28px !important;
+  height: 28px !important;
+  min-height: 28px !important;
+
+  padding: 0 !important;
+  margin: 0.1rem 0 0 -0.6rem !important;
+
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+
+  color: #d8dde8 !important;
+  font-size: 1.15rem !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  text-align: center !important;
+}
+
+/* Remove background on hover, click, and focus */
+section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button:hover,
+section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button:focus,
+section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button:active,
+section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button:hover,
+section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button:focus,
+section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button:active {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+
+  transform: none !important;
+  color: #ffffff !important;
+}
+
+/* Remove any pseudo background Streamlit may add */
+section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button::before,
+section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button::after,
+section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button::before,
+section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button::after {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
     </style>
     """,
     unsafe_allow_html=True,
