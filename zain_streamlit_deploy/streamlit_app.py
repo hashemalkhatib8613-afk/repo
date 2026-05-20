@@ -55,191 +55,208 @@ LOGO_DATA_URI = get_logo_data_uri()
 st.markdown(
     """
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
       html, body, [class*="css"] {
         font-family: "Inter", sans-serif !important;
       }
 
       .stApp {
-        background: #edf2f8;
-        color: #111827;
+        background: #f4f7fe;
+        color: #1b2559;
       }
 
       .block-container {
-        max-width: 980px;
-        padding-top: 2.1rem;
-        padding-bottom: 7.5rem;
+        max-width: 1180px;
+        padding-top: 1.4rem;
+        padding-bottom: 8rem;
+      }
+
+      /* Hide Streamlit default header space */
+      header[data-testid="stHeader"] {
+        background: transparent;
       }
 
       /* ================================
-         SIDEBAR - FIGMA STYLE
+         HORIZON-STYLE SIDEBAR
          ================================ */
 
       section[data-testid="stSidebar"] {
-        background: #d9e4f2;
+        background: #0b1437;
         border-right: 0;
-        width: 285px !important;
+        width: 310px !important;
       }
 
       section[data-testid="stSidebar"] > div {
-        padding: 1.05rem 0.85rem;
+        padding: 1rem 0.85rem;
       }
 
       section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {
-        background: #ffffff;
-        border-radius: 22px;
-        padding: 1.15rem 0.9rem;
-        margin: 0.55rem;
-        min-height: calc(100vh - 1.1rem);
-        box-shadow: 0 22px 55px rgba(31, 41, 55, 0.08);
+        background:
+          radial-gradient(circle at 20% 0%, rgba(67, 24, 255, 0.24), transparent 28%),
+          linear-gradient(180deg, #111c44 0%, #0b1437 55%, #060b22 100%);
+        border-radius: 26px;
+        padding: 1.1rem 0.95rem;
+        min-height: calc(100vh - 2rem);
+        box-shadow: 0 24px 70px rgba(6, 11, 34, 0.48);
+        border: 1px solid rgba(255, 255, 255, 0.08);
       }
 
-      .sidebar-brand {
+      .sidebar-brand-card {
+        padding: 1.05rem 0.95rem 1rem;
+        border-radius: 22px;
+        background:
+          radial-gradient(circle at 92% 8%, rgba(117, 81, 255, 0.28), transparent 28%),
+          linear-gradient(135deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.04));
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        margin-bottom: 1rem;
+      }
+
+      .sidebar-brand-top {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        margin-bottom: 1.2rem;
-        padding: 0 0.1rem;
+        gap: 0.65rem;
+        margin-bottom: 0.55rem;
+      }
+
+      .sidebar-brand-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        font-weight: 900;
+        background: linear-gradient(135deg, #4318ff, #7551ff);
+        box-shadow: 0 12px 30px rgba(67, 24, 255, 0.35);
       }
 
       .sidebar-brand-title {
-        color: #0f172a;
-        font-size: 1.18rem;
-        font-weight: 800;
-        letter-spacing: 0.28em;
+        color: #ffffff;
+        font-size: 1.02rem;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
       }
 
-      .sidebar-brand-plus {
-        color: #111827;
-        font-weight: 700;
-        font-size: 1rem;
-        letter-spacing: 0;
-        margin-left: 0.25rem;
-      }
-
-      .sidebar-top-actions {
-        display: grid;
-        grid-template-columns: 1fr 42px;
-        gap: 0.55rem;
-        margin-bottom: 1.1rem;
-      }
-
-      .sidebar-section-line {
-        height: 1px;
-        background: #eef1f5;
-        margin: 0.95rem -0.9rem 0.75rem;
-      }
-
-      .sidebar-small-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        color: #7c8798;
+      .sidebar-brand-subtitle {
+        color: #a3aed0;
         font-size: 0.72rem;
-        margin: 0.2rem 0 0.55rem;
+        font-weight: 600;
       }
 
-      .sidebar-clear {
-        color: #5a67ff;
-        font-weight: 600;
+      .sidebar-brand-copy {
+        color: #c8d0e7;
+        font-size: 0.76rem;
+        line-height: 1.5;
+      }
+
+      .sidebar-section-label {
+        color: #7f8ab5;
         font-size: 0.7rem;
+        font-weight: 900;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+        margin: 1rem 0 0.45rem 0.2rem;
+      }
+
+      .sidebar-line {
+        height: 1px;
+        margin: 0.9rem 0;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
       }
 
       .sidebar-footnote {
-        margin-top: 1.25rem;
-        border-top: 1px solid #eef1f5;
+        margin-top: 1.15rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
         padding-top: 0.9rem;
-        color: #8c95a3;
+        color: #8995c8;
         font-size: 0.72rem;
-        line-height: 1.45;
+        line-height: 1.5;
       }
 
-      section[data-testid="stSidebar"] div.stButton > button {
-        width: 100%;
-        min-height: 42px;
-        border-radius: 14px;
-        border: 1px solid transparent;
-        background: transparent;
-        color: #111827;
-        font-weight: 600;
-        font-size: 0.82rem;
-        text-align: left;
-        justify-content: flex-start;
-        padding: 0.55rem 0.7rem;
-        box-shadow: none;
-      }
-
-      section[data-testid="stSidebar"] div.stButton > button:hover {
-        background: #f5f7fb;
-        border-color: #eef1f5;
-        color: #111827;
-        transform: none;
-      }
-
-      section[data-testid="stSidebar"] div.stButton > button[kind="primary"] {
-        background: #5b5cf6 !important;
-        border-color: #5b5cf6 !important;
-        color: #ffffff !important;
-        box-shadow: 0 10px 22px rgba(91, 92, 246, 0.25) !important;
-      }
-
-      /* New chat button */
-      section[data-testid="stSidebar"] [class*="st-key-sidebar_new_chat"] button {
-        background: #5b5cf6 !important;
-        color: #ffffff !important;
-        justify-content: center !important;
-        text-align: center !important;
-        min-height: 40px !important;
-        border-radius: 14px !important;
-      }
-
-      /* Search circle button look */
-      section[data-testid="stSidebar"] [class*="st-key-sidebar_search_fake"] button {
-        background: #050505 !important;
-        color: #ffffff !important;
-        border-radius: 999px !important;
-        min-height: 42px !important;
-        width: 42px !important;
-        padding: 0 !important;
-        justify-content: center !important;
-        text-align: center !important;
-      }
-
-      /* Expander styling */
       section[data-testid="stSidebar"] details {
         border: 0 !important;
       }
 
       section[data-testid="stSidebar"] details summary {
-        font-weight: 700;
-        color: #111827;
+        color: #ffffff !important;
+        font-weight: 800;
+        font-size: 0.86rem;
+      }
+
+      section[data-testid="stSidebar"] div.stButton > button {
+        width: 100%;
+        min-height: 44px;
+        border-radius: 16px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: #c8d0e7;
+        font-weight: 750;
         font-size: 0.84rem;
+        text-align: left;
+        justify-content: flex-start;
+        padding: 0.58rem 0.78rem;
+        box-shadow: none;
+      }
+
+      section[data-testid="stSidebar"] div.stButton > button:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.10);
+        color: #ffffff;
+        transform: none;
+      }
+
+      section[data-testid="stSidebar"] div.stButton > button[kind="primary"] {
+        background: linear-gradient(135deg, #4318ff, #7551ff) !important;
+        border-color: rgba(255, 255, 255, 0.14) !important;
+        color: #ffffff !important;
+        box-shadow: 0 14px 32px rgba(67, 24, 255, 0.32) !important;
+      }
+
+      section[data-testid="stSidebar"] [class*="st-key-sidebar_new_chat"] button {
+        background: linear-gradient(135deg, #4318ff, #7551ff) !important;
+        color: #ffffff !important;
+        justify-content: center !important;
+        text-align: center !important;
+        min-height: 44px !important;
+        border-radius: 17px !important;
+      }
+
+      section[data-testid="stSidebar"] [class*="st-key-sidebar_search_fake"] button {
+        background: rgba(255, 255, 255, 0.08) !important;
+        color: #ffffff !important;
+        border-radius: 16px !important;
+        min-height: 44px !important;
+        padding: 0 !important;
+        justify-content: center !important;
+        text-align: center !important;
       }
 
       /* ================================
-         CHAT ITEMS
+         CHAT ITEMS IN SIDEBAR
          ================================ */
 
       section[data-testid="stSidebar"] [class*="st-key-chat_item_"] {
-        border-radius: 14px;
-        padding: 0.15rem 0.15rem;
-        margin-bottom: 0.26rem;
+        border-radius: 16px;
+        padding: 0.14rem 0.1rem;
+        margin-bottom: 0.28rem;
         background: transparent;
       }
 
       section[data-testid="stSidebar"] [class*="st-key-chat_item_"] div[data-testid="stHorizontalBlock"] {
         align-items: center;
-        gap: 0.05rem;
+        gap: 0.04rem;
       }
 
       section[data-testid="stSidebar"] [class*="st-key-chat_select_wrap_"] div.stButton > button {
         width: 100% !important;
-        min-height: 36px !important;
-        border-radius: 12px !important;
-        padding: 0.45rem 0.55rem !important;
-        font-size: 0.78rem !important;
-        color: #374151 !important;
+        min-height: 40px !important;
+        border-radius: 14px !important;
+        padding: 0.5rem 0.62rem !important;
+        font-size: 0.79rem !important;
+        color: #c8d0e7 !important;
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
@@ -247,9 +264,9 @@ st.markdown(
       }
 
       section[data-testid="stSidebar"] [class*="st-key-chat_select_wrap_"] div.stButton > button[kind="primary"] {
-        color: #5b5cf6 !important;
-        background: #f2f3ff !important;
-        border: none !important;
+        color: #ffffff !important;
+        background: rgba(117, 81, 255, 0.22) !important;
+        border: 1px solid rgba(117, 81, 255, 0.28) !important;
         box-shadow: none !important;
       }
 
@@ -273,9 +290,9 @@ st.markdown(
         background-color: transparent !important;
         border: none !important;
         box-shadow: none !important;
-        color: #7b8494 !important;
+        color: #8995c8 !important;
         font-size: 1rem !important;
-        font-weight: 800 !important;
+        font-weight: 900 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
@@ -284,75 +301,180 @@ st.markdown(
       section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button:hover,
       section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button:hover {
         background: transparent !important;
-        color: #111827 !important;
+        color: #ffffff !important;
         transform: none !important;
       }
 
       section[data-testid="stSidebar"] [class*="st-key-chat_actions_wrap_"] {
-        margin: 0.2rem 0 0.35rem 0.55rem;
+        margin: 0.25rem 0 0.35rem 0.45rem;
       }
 
       section[data-testid="stSidebar"] [class*="st-key-chat_actions_wrap_"] div.stButton > button {
-        min-height: 31px !important;
-        border-radius: 10px !important;
+        min-height: 32px !important;
+        border-radius: 12px !important;
         padding: 0.35rem 0.55rem !important;
         font-size: 0.74rem !important;
         justify-content: center !important;
         text-align: center !important;
-        background: #f5f7fb !important;
-        border: 1px solid #eef1f5 !important;
+        background: rgba(255, 255, 255, 0.08) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
       }
 
       section[data-testid="stSidebar"] [class*="st-key-chat_rename_wrap_"] input {
         min-height: 38px;
-        border-radius: 12px;
+        border-radius: 14px;
+        background: #ffffff !important;
       }
 
       /* ================================
-         MAIN PAGE HEADER
+         HORIZON PAGE HEADER
          ================================ */
 
       .page-brand-card {
         position: relative;
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 1rem;
         width: 100%;
-        margin-bottom: 1.2rem;
+        min-height: 158px;
+        border-radius: 28px;
+        padding: 1.55rem 1.65rem;
+        margin-bottom: 1.25rem;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 86% 20%, rgba(117, 81, 255, 0.22), transparent 27%),
+          radial-gradient(circle at 10% 0%, rgba(67, 24, 255, 0.10), transparent 34%),
+          linear-gradient(135deg, #ffffff 0%, #ffffff 58%, #eef2ff 100%);
+        border: 1px solid #e9edf7;
+        box-shadow: 0 18px 42px rgba(112, 144, 176, 0.14);
+      }
+
+      .page-brand-card::before {
+        content: "";
+        position: absolute;
+        right: -60px;
+        top: -75px;
+        width: 260px;
+        height: 260px;
+        border-radius: 999px;
+        background: rgba(67, 24, 255, 0.08);
+      }
+
+      .page-brand-card::after {
+        content: "";
+        position: absolute;
+        right: 110px;
+        bottom: -90px;
+        width: 220px;
+        height: 220px;
+        border-radius: 999px;
+        background: rgba(117, 81, 255, 0.09);
+      }
+
+      .page-brand-content {
+        position: relative;
+        z-index: 2;
+        max-width: 760px;
       }
 
       .page-brand-eyebrow {
-        color: #5b5cf6;
-        font-size: 0.72rem;
-        font-weight: 800;
-        letter-spacing: 0.04em;
-        margin-bottom: 0.28rem;
+        color: #4318ff;
+        font-size: 0.75rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 0.42rem;
       }
 
       .page-brand-title {
-        color: #111827;
-        font-size: 1.62rem;
-        font-weight: 800;
-        letter-spacing: -0.035em;
-        line-height: 1.1;
-        margin-bottom: 0.5rem;
+        color: #1b2559;
+        font-size: 2rem;
+        font-weight: 900;
+        letter-spacing: -0.045em;
+        line-height: 1.08;
+        margin-bottom: 0.55rem;
       }
 
       .page-brand-copy {
-        color: #4b5563;
-        font-size: 0.9rem;
-        line-height: 1.55;
+        color: #707eae;
+        font-size: 0.94rem;
+        line-height: 1.6;
         max-width: 720px;
       }
 
       .page-brand-logo {
-        width: 118px;
-        max-width: 118px;
+        position: absolute;
+        z-index: 3;
+        right: 1.6rem;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 138px;
+        max-width: 138px;
         height: auto;
-        opacity: 0.42;
         object-fit: contain;
-        margin-top: 0.1rem;
+        opacity: 0.34;
+        filter: grayscale(1);
+      }
+
+      /* ================================
+         MAIN CONTENT CARDS
+         ================================ */
+
+      div[data-testid="stMetric"] {
+        background: #ffffff;
+        border: 1px solid #e9edf7;
+        border-radius: 22px;
+        padding: 18px;
+        box-shadow: 0 18px 42px rgba(112, 144, 176, 0.12);
+      }
+
+      div[data-testid="stMetric"] label {
+        color: #707eae !important;
+        font-weight: 700 !important;
+      }
+
+      div[data-testid="stMetricValue"] {
+        color: #1b2559 !important;
+        font-weight: 900 !important;
+      }
+
+      .stPlotlyChart {
+        background: #ffffff;
+        border: 1px solid #e9edf7;
+        border-radius: 26px;
+        padding: 1rem;
+        box-shadow: 0 18px 42px rgba(112, 144, 176, 0.12);
+      }
+
+      div[data-testid="stDataFrame"] {
+        border-radius: 22px;
+        overflow: hidden;
+        border: 1px solid #e9edf7;
+        box-shadow: 0 18px 42px rgba(112, 144, 176, 0.10);
+      }
+
+      div[data-testid="stExpander"] {
+        border: 1px solid #e9edf7;
+        border-radius: 20px;
+        background: #ffffff;
+        box-shadow: 0 12px 30px rgba(112, 144, 176, 0.10);
+        overflow: hidden;
+      }
+
+      div[data-testid="stCodeBlock"] {
+        border-radius: 18px;
+        border: 1px solid #e9edf7;
+        overflow: hidden;
+      }
+
+      div[data-testid="stAlert"] {
+        border-radius: 18px;
+      }
+
+      h1, h2, h3, h4 {
+        color: #1b2559 !important;
+        letter-spacing: -0.035em;
+      }
+
+      p, span, li {
+        color: inherit;
       }
 
       /* ================================
@@ -361,105 +483,71 @@ st.markdown(
 
       div[data-testid="stChatMessage"] {
         background: transparent;
-        padding: 0.3rem 0;
-      }
-
-      div[data-testid="stChatMessage"] [data-testid="chatAvatarIcon-user"],
-      div[data-testid="stChatMessage"] [data-testid="chatAvatarIcon-assistant"] {
-        border-radius: 999px;
+        padding: 0.38rem 0;
       }
 
       div[data-testid="stChatMessageContent"] {
-        color: #111827;
-        font-size: 0.9rem;
+        color: #1b2559;
+        font-size: 0.92rem;
         line-height: 1.65;
       }
 
       div[data-testid="stChatMessageContent"] p {
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.7rem;
       }
 
-      hr {
-        border-color: #dce4ef;
+      div[data-testid="stChatMessage"] [data-testid="chatAvatarIcon-assistant"] {
+        background: linear-gradient(135deg, #4318ff, #7551ff);
+      }
+
+      div[data-testid="stChatMessage"] [data-testid="chatAvatarIcon-user"] {
+        background: #1b2559;
       }
 
       /* ================================
-         METRICS / TABLES / CHARTS
+         FORM ELEMENTS
          ================================ */
-
-      div[data-testid="stMetric"] {
-        background: #ffffff;
-        border: 1px solid #e7ecf3;
-        border-radius: 18px;
-        padding: 15px;
-        box-shadow: 0 16px 34px rgba(31, 41, 55, 0.05);
-      }
-
-      div[data-testid="stDataFrame"] {
-        border-radius: 18px;
-        overflow: hidden;
-      }
-
-      .stPlotlyChart {
-        background: #ffffff;
-        border: 1px solid #e7ecf3;
-        border-radius: 20px;
-        padding: 0.75rem;
-        box-shadow: 0 16px 34px rgba(31, 41, 55, 0.05);
-      }
-
-      div[data-testid="stCodeBlock"] {
-        border-radius: 16px;
-        border: 1px solid #e1e7f0;
-        overflow: hidden;
-      }
-
-      div[data-testid="stExpander"] {
-        border: 1px solid #e3e9f2;
-        border-radius: 16px;
-        background: #ffffff;
-        box-shadow: 0 12px 28px rgba(31, 41, 55, 0.04);
-      }
-
-      div[data-testid="stAlert"] {
-        border-radius: 14px;
-      }
-
-      /* Main buttons */
-      .main div.stButton > button {
-        width: auto;
-        min-height: 40px;
-        border-radius: 14px;
-        border: 1px solid #e1e7f0;
-        background: #ffffff;
-        color: #111827;
-        font-weight: 700;
-        justify-content: center;
-        text-align: center;
-        padding: 0.55rem 0.9rem;
-        box-shadow: 0 12px 26px rgba(31, 41, 55, 0.05);
-      }
-
-      .main div.stButton > button:hover {
-        border-color: #5b5cf6;
-        color: #5b5cf6;
-        background: #ffffff;
-        transform: none;
-      }
-
-      .main div.stButton > button[kind="primary"] {
-        background: #5b5cf6 !important;
-        color: #ffffff !important;
-        border-color: #5b5cf6 !important;
-        box-shadow: 0 14px 26px rgba(91, 92, 246, 0.22) !important;
-      }
 
       textarea,
       input {
-        border-radius: 16px !important;
-        border-color: #dfe6f0 !important;
+        border-radius: 18px !important;
+        border-color: #e0e5f2 !important;
         background: #ffffff !important;
-        color: #111827 !important;
+        color: #1b2559 !important;
+      }
+
+      textarea:focus,
+      input:focus {
+        border-color: #4318ff !important;
+        box-shadow: 0 0 0 3px rgba(67, 24, 255, 0.10) !important;
+      }
+
+      .main div.stButton > button {
+        width: auto;
+        min-height: 42px;
+        border-radius: 16px;
+        border: 1px solid #e9edf7;
+        background: #ffffff;
+        color: #1b2559;
+        font-weight: 800;
+        justify-content: center;
+        text-align: center;
+        padding: 0.58rem 0.95rem;
+        box-shadow: 0 12px 26px rgba(112, 144, 176, 0.10);
+      }
+
+      .main div.stButton > button:hover {
+        border-color: #4318ff;
+        color: #4318ff;
+        background: #ffffff;
+        transform: translateY(-1px);
+      }
+
+      .main div.stButton > button[kind="primary"] {
+        background: linear-gradient(135deg, #4318ff, #7551ff) !important;
+        color: #ffffff !important;
+        border-color: #4318ff !important;
+        box-shadow: 0 14px 28px rgba(67, 24, 255, 0.24) !important;
       }
 
       /* ================================
@@ -468,16 +556,16 @@ st.markdown(
 
       .st-key-fixed_chat_bar {
         position: fixed;
-        left: calc(285px + 50%);
+        left: calc(310px + 50%);
         transform: translateX(-50%);
-        bottom: 1.45rem;
+        bottom: 1.35rem;
         z-index: 1001;
-        width: min(720px, calc(100vw - 360px));
-        border: 1px solid #e5eaf2;
+        width: min(760px, calc(100vw - 410px));
+        border: 1px solid #e0e5f2;
         border-radius: 999px;
-        padding: 0.42rem 0.45rem 0.42rem 0.85rem;
+        padding: 0.42rem 0.46rem 0.42rem 0.9rem;
         background: rgba(255, 255, 255, 0.96);
-        box-shadow: 0 20px 50px rgba(31, 41, 55, 0.16);
+        box-shadow: 0 24px 60px rgba(112, 144, 176, 0.26);
         backdrop-filter: blur(18px);
       }
 
@@ -489,7 +577,7 @@ st.markdown(
 
       .st-key-fixed_chat_bar div[data-testid="stHorizontalBlock"] {
         align-items: center;
-        gap: 0.45rem;
+        gap: 0.5rem;
       }
 
       .st-key-fixed_chat_bar div[data-testid="column"] {
@@ -499,10 +587,11 @@ st.markdown(
 
       .st-key-fixed_chat_bar input {
         border: 0 !important;
-        min-height: 44px;
+        min-height: 46px;
         background: transparent !important;
         box-shadow: none !important;
-        font-size: 0.82rem !important;
+        font-size: 0.86rem !important;
+        color: #1b2559 !important;
       }
 
       .st-key-fixed_chat_bar input:focus {
@@ -512,25 +601,25 @@ st.markdown(
       }
 
       .st-key-fixed_chat_bar button {
-        width: 42px !important;
-        min-width: 42px !important;
-        height: 42px !important;
-        min-height: 42px !important;
+        width: 46px !important;
+        min-width: 46px !important;
+        height: 46px !important;
+        min-height: 46px !important;
         border-radius: 999px !important;
         padding: 0 !important;
         justify-content: center !important;
         align-items: center !important;
         text-align: center !important;
-        background: linear-gradient(135deg, #7b61ff, #4f46e5) !important;
+        background: linear-gradient(135deg, #4318ff, #7551ff) !important;
         color: #ffffff !important;
         border: 0 !important;
-        box-shadow: 0 12px 24px rgba(79, 70, 229, 0.28) !important;
+        box-shadow: 0 12px 28px rgba(67, 24, 255, 0.32) !important;
         font-size: 0 !important;
       }
 
       .st-key-fixed_chat_bar button::after {
-        content: "➤";
-        font-size: 1rem;
+        content: "➜";
+        font-size: 1.05rem;
         line-height: 1;
       }
 
@@ -552,15 +641,22 @@ st.markdown(
         }
 
         .page-brand-card {
-          flex-direction: column;
+          padding: 1.2rem;
+          min-height: auto;
         }
 
         .page-brand-logo {
-          width: 90px;
+          position: relative;
+          top: auto;
+          right: auto;
+          transform: none;
+          display: block;
+          width: 92px;
+          margin-top: 1rem;
         }
 
         .page-brand-title {
-          font-size: 1.35rem;
+          font-size: 1.42rem;
         }
       }
     </style>
@@ -625,7 +721,7 @@ def render_page_brand(page_key, title, subtitle):
         f"""
         <div class="page-brand-card" id="page-brand-{page_key}">
           <div class="page-brand-content">
-            <div class="page-brand-eyebrow">CHAT A.I +</div>
+            <div class="page-brand-eyebrow">Zain 360 Copilot</div>
             <div class="page-brand-title">{title}</div>
             <div class="page-brand-copy">{subtitle}</div>
           </div>
@@ -827,7 +923,7 @@ def show_overview():
     render_page_brand(
         "overview",
         "Database Overview",
-        "Get a high-level view of KPIs, table volumes, and key customer insights from the Customer 360 database.",
+        "Explore customer volume, churn risk, city distribution, and major database activity from a clean executive view.",
     )
 
     data = get_database_overview()
@@ -852,7 +948,7 @@ def show_chart_builder():
     render_page_brand(
         "chart_builder",
         "Chart Builder",
-        "Describe the chart you need in plain language and let the app query the database and visualize the result.",
+        "Turn a natural-language business question into a clean chart directly from the Customer 360 database.",
     )
 
     question = st.text_area(
@@ -879,7 +975,7 @@ def show_chat():
     render_page_brand(
         "chat",
         "Customer 360 Chat",
-        f"{chat['title']} · Ask about customers, churn, billing, complaints, campaigns, and network events.",
+        f"{chat['title']} · Ask about customers, churn, billing, complaints, campaigns, network events, and usage insights.",
     )
 
     for index, message in enumerate(chat["messages"]):
@@ -899,7 +995,7 @@ def show_chat():
             with input_col:
                 prompt = st.text_input(
                     "Question",
-                    placeholder="What’s in your mind?...",
+                    placeholder="Ask Zain 360 Copilot anything about the database...",
                     label_visibility="collapsed",
                 )
 
@@ -942,7 +1038,7 @@ def show_suggested_questions():
     render_page_brand(
         "suggested_questions",
         "Suggested Questions",
-        "Use these guided questions to explore common business scenarios and quickly move into database-backed answers.",
+        "Start with guided use cases for churn, complaints, revenue, campaigns, network impact, and customer profiling.",
     )
 
     for question in SUGGESTED_QUESTIONS:
@@ -973,7 +1069,7 @@ def show_sql_builder_page():
     render_page_brand(
         "sql_builder",
         "SQL Query Builder",
-        "Run read-only SQL queries, inspect results quickly, and validate the data behind your business questions.",
+        "Run safe read-only SQL queries, inspect returned rows, and validate the data behind business insights.",
     )
 
     st.caption("Safe runner for read-only SELECT queries.")
@@ -983,9 +1079,16 @@ def show_sql_builder_page():
 with st.sidebar:
     st.markdown(
         """
-        <div class="sidebar-brand">
-          <div>
-            <span class="sidebar-brand-title">CHAT A.I</span><span class="sidebar-brand-plus">+</span>
+        <div class="sidebar-brand-card">
+          <div class="sidebar-brand-top">
+            <div class="sidebar-brand-icon">AI</div>
+            <div>
+              <div class="sidebar-brand-title">Zain 360 Copilot</div>
+              <div class="sidebar-brand-subtitle">Customer Intelligence</div>
+            </div>
+          </div>
+          <div class="sidebar-brand-copy">
+            Ask business questions, inspect SQL, explore charts, and understand customer signals from one AI workspace.
           </div>
         </div>
         """,
@@ -997,26 +1100,17 @@ with st.sidebar:
 
     init_chat_sessions()
 
-    top_col_1, top_col_2 = st.columns([4, 1.2])
+    top_col_1, top_col_2 = st.columns([4, 1.15])
 
     with top_col_1:
-        if st.button("＋  New chat", key="sidebar_new_chat", type="primary"):
+        if st.button("＋ New Chat", key="sidebar_new_chat", type="primary"):
             create_new_chat()
             st.rerun()
 
     with top_col_2:
         st.button("⌕", key="sidebar_search_fake")
 
-    st.markdown(
-        """
-        <div class="sidebar-section-line"></div>
-        <div class="sidebar-small-row">
-          <span>Your conversations</span>
-          <span class="sidebar-clear">Clear All</span>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown('<div class="sidebar-section-label">Conversations</div>', unsafe_allow_html=True)
 
     with st.expander("Chats", expanded=True):
         for chat in list(st.session_state.chat_sessions):
@@ -1025,7 +1119,7 @@ with st.sidebar:
 
                 with row_col:
                     with st.container(key=f"chat_select_wrap_{chat['id']}"):
-                        label = "▱  " + chat["title"]
+                        label = "💬 " + chat["title"]
                         chat_type = (
                             "primary"
                             if st.session_state.page == "Chat"
@@ -1088,12 +1182,8 @@ with st.sidebar:
                                 st.session_state.rename_chat_value = ""
                                 st.rerun()
 
-    st.markdown(
-        """
-        <div class="sidebar-section-line"></div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown('<div class="sidebar-line"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-section-label">Workspace</div>', unsafe_allow_html=True)
 
     for page_name, label in NAV_ITEMS:
         nav_button_type = "primary" if st.session_state.page == page_name else "secondary"
@@ -1106,7 +1196,7 @@ with st.sidebar:
     st.markdown(
         """
         <div class="sidebar-footnote">
-          Built for fast telecom insight: ask, inspect the SQL, and turn answers into action.
+          Built for telecom insight: customer view, churn, revenue, complaints, campaigns, and network impact.
         </div>
         """,
         unsafe_allow_html=True,
