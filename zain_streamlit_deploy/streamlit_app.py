@@ -146,40 +146,23 @@ st.markdown(
         font-size: 0.72rem;
         line-height: 1.45;
       }
-      .st-key-fixed_chat_bar {
+      .st-key-clear_chat_float {
         position: fixed;
-        left: 22rem;
-        right: 1.5rem;
-        bottom: 0.9rem;
+        right: 4.9rem;
+        bottom: 1.05rem;
         z-index: 1001;
-        border: 1px solid #303746;
-        border-radius: 16px;
-        padding: 0.75rem;
-        background: rgba(17, 20, 27, 0.98);
-        box-shadow: 0 -18px 42px rgba(0, 0, 0, 0.28);
+        width: 92px;
       }
-      .st-key-fixed_chat_bar [data-testid="stForm"] {
-        border: 0;
-        padding: 0;
-        background: transparent;
-      }
-      .st-key-fixed_chat_bar div[data-testid="stHorizontalBlock"] {
-        align-items: end;
-      }
-      .st-key-fixed_chat_bar input {
-        min-height: 48px;
-        border-radius: 12px;
-      }
-      .st-key-fixed_chat_bar button {
-        min-height: 48px !important;
+      .st-key-clear_chat_float button {
+        min-height: 38px !important;
+        padding: 0 0.7rem !important;
         justify-content: center !important;
-        border-radius: 12px !important;
+        border-radius: 10px !important;
+        background: #1f2430 !important;
+        font-size: 0.78rem !important;
       }
-      @media (max-width: 900px) {
-        .st-key-fixed_chat_bar {
-          left: 1rem;
-          right: 1rem;
-        }
+      .st-key-clear_chat_float button:hover {
+        background: #2d3548 !important;
       }
       div[data-testid="stAlert"] {
         border-radius: 10px;
@@ -348,21 +331,9 @@ def show_chat():
                 with st.expander("SQL Query"):
                     render_sql_runner(message["sql"], key_prefix=f"history_{index}")
 
-    chat_bar = st.container(key="fixed_chat_bar")
-    with chat_bar:
-        with st.form("fixed_chat_form", clear_on_submit=True):
-            input_col, send_col, clear_col = st.columns([8, 1, 1])
-            with input_col:
-                prompt = st.text_input(
-                    "Question",
-                    placeholder="Ask a question about the Customer 360 database",
-                    label_visibility="collapsed",
-                )
-            with send_col:
-                submitted = st.form_submit_button("Send", type="primary", width="stretch")
-            with clear_col:
-                clear_chat = st.form_submit_button("Clear", width="stretch")
-
+    clear_box = st.container(key="clear_chat_float")
+    with clear_box:
+        clear_chat = st.button("Clear", key="clear_chat_button", width="stretch")
     if clear_chat:
         st.session_state.messages = [
             {"role": "assistant", "content": "Hello. Ask me a business question about the Zain Customer 360 database."}
@@ -370,8 +341,8 @@ def show_chat():
         st.success("Chat cleared.")
         st.rerun()
 
-    if submitted and prompt.strip():
-        prompt = prompt.strip()
+    prompt = st.chat_input("Ask a question about the Customer 360 database")
+    if prompt:
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
