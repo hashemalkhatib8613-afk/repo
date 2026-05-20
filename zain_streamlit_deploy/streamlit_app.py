@@ -50,31 +50,6 @@ st.set_page_config(
 # ============================================================
 
 THEME_TOKENS: Dict[str, Dict[str, str]] = {
-    "Light": {
-        "app_bg": "#EEF3FB",
-        "app_bg_2": "#F8FAFF",
-        "sidebar_bg": "rgba(255, 255, 255, 0.76)",
-        "surface": "rgba(255, 255, 255, 0.86)",
-        "surface_2": "rgba(247, 249, 255, 0.88)",
-        "surface_3": "#FFFFFF",
-        "text": "#101828",
-        "text_soft": "#344054",
-        "muted": "#667085",
-        "faint": "#98A2B3",
-        "border": "rgba(16, 24, 40, 0.10)",
-        "border_strong": "rgba(99, 91, 255, 0.28)",
-        "accent": "#635BFF",
-        "accent_2": "#7C3AED",
-        "accent_3": "#06B6D4",
-        "success": "#16A34A",
-        "warning": "#F59E0B",
-        "danger": "#DC2626",
-        "shadow": "0 24px 70px rgba(31, 41, 55, 0.13)",
-        "shadow_soft": "0 14px 38px rgba(31, 41, 55, 0.10)",
-        "plot_template": "plotly_white",
-        "plot_bg": "rgba(0,0,0,0)",
-        "paper_bg": "rgba(0,0,0,0)",
-    },
     "Dark": {
         "app_bg": "#060916",
         "app_bg_2": "#0B1022",
@@ -104,9 +79,8 @@ THEME_TOKENS: Dict[str, Dict[str, str]] = {
 
 
 def get_theme_name() -> str:
-    if "appearance" not in st.session_state:
-        st.session_state.appearance = "Light"
-    return st.session_state.appearance
+    st.session_state.appearance = "Dark"
+    return "Dark"
 
 
 def theme() -> Dict[str, str]:
@@ -957,7 +931,6 @@ SUGGESTED_QUESTIONS = [
 ]
 
 NAV_ITEMS = [
-    ("Ask AI", "💬", "Ask AI"),
     ("Executive Overview", "📊", "Overview"),
     ("Dynamic Analytics", "🎛️", "Analytics"),
     ("Customer Explorer", "👤", "Customer"),
@@ -1079,15 +1052,6 @@ def render_sidebar() -> None:
             unsafe_allow_html=True,
         )
 
-        st.markdown('<div class="sidebar-label">Appearance</div>', unsafe_allow_html=True)
-        st.radio(
-            "Appearance",
-            ["Light", "Dark"],
-            key="appearance",
-            horizontal=True,
-            label_visibility="collapsed",
-        )
-
         st.markdown('<div class="sidebar-label">Workspace</div>', unsafe_allow_html=True)
         for page_name, icon, short_label in NAV_ITEMS:
             button_type = "primary" if st.session_state.page == page_name else "secondary"
@@ -1096,17 +1060,17 @@ def render_sidebar() -> None:
                 st.rerun()
 
         st.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
-        top_col_1, top_col_2 = st.columns([4, 1.1])
+        st.markdown('<div class="sidebar-label">Chats</div>', unsafe_allow_html=True)
+        top_col_1, top_col_2 = st.columns([1, 1])
         with top_col_1:
-            if st.button("＋ New chat", key="new_chat", type="primary"):
+            if st.button("＋", key="new_chat", type="primary", help="New chat"):
                 create_new_chat()
                 st.rerun()
         with top_col_2:
-            if st.button("↻", key="refresh_app", help="Refresh cached data"):
+            if st.button("↻", key="refresh_app", help="Refresh data"):
                 st.cache_data.clear()
                 st.rerun()
 
-        st.markdown('<div class="sidebar-label">Conversations</div>', unsafe_allow_html=True)
         st.text_input("Search conversations", key="chat_search", placeholder="Search chats...", label_visibility="collapsed")
         search_text = st.session_state.chat_search.lower().strip()
 
@@ -1121,15 +1085,16 @@ def render_sidebar() -> None:
             row_col, action_col = st.columns([8, 1.35])
             with row_col:
                 if st.button(
-                    "💬 " + chat["title"],
+                    chat["title"],
                     key=f"select_chat_{chat['id']}",
                     type="primary" if selected else "secondary",
+                    help="Open chat",
                 ):
                     st.session_state.current_chat_id = chat["id"]
                     st.session_state.page = "Ask AI"
                     st.rerun()
             with action_col:
-                if st.button("⋯", key=f"rename_open_{chat['id']}", help="Rename this chat"):
+                if st.button("✎", key=f"rename_open_{chat['id']}", help="Rename chat"):
                     st.session_state.rename_chat_id = chat["id"]
                     st.session_state.rename_chat_value = chat["title"]
 
@@ -1142,11 +1107,11 @@ def render_sidebar() -> None:
                 )
                 save_col, delete_col = st.columns(2)
                 with save_col:
-                    if st.button("Save", key=f"save_rename_{chat['id']}", type="primary"):
+                    if st.button("✓", key=f"save_rename_{chat['id']}", type="primary", help="Save name"):
                         rename_chat(chat["id"], new_title)
                         st.rerun()
                 with delete_col:
-                    if st.button("Delete", key=f"delete_{chat['id']}"):
+                    if st.button("🗑", key=f"delete_{chat['id']}", help="Delete chat"):
                         delete_chat(chat["id"])
                         st.rerun()
 
@@ -1226,16 +1191,17 @@ def show_chat() -> None:
                 with st.expander("SQL used for this answer"):
                     st.code(message["sql"], language="sql")
 
-    export_col, clear_col = st.columns([1, 1])
+    export_col, clear_col, _ = st.columns([0.12, 0.12, 0.76])
     with export_col:
         st.download_button(
-            "Download chat",
+            "↓",
             data=chat_to_markdown(chat),
             file_name=f"{chat['title'].replace(' ', '_')[:40]}_chat.md",
             mime="text/markdown",
+            help="Download chat",
         )
     with clear_col:
-        if st.button("Clear current chat"):
+        if st.button("↺", help="Clear current chat"):
             chat["messages"] = [default_assistant_message()]
             chat["title"] = "New Chat"
             st.rerun()
