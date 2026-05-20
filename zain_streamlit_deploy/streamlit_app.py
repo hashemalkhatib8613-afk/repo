@@ -998,25 +998,6 @@ def show_chat():
         "Conversational analytics",
     )
 
-    top_cols = st.columns([1, 1, 1, 2])
-    with top_cols[0]:
-        if st.button("＋ New chat", type="primary", use_container_width=True):
-            create_new_chat()
-            st.rerun()
-    with top_cols[1]:
-        st.download_button(
-            "Export chat",
-            chat_to_markdown(chat).encode("utf-8"),
-            file_name=f"{chat['title'].replace(' ', '_')}.md",
-            mime="text/markdown",
-            use_container_width=True,
-        )
-    with top_cols[2]:
-        if st.button("Clear chat", use_container_width=True):
-            chat["messages"] = [default_assistant_message()]
-            chat["title"] = "New Chat"
-            st.rerun()
-
     st.markdown('<div class="section-title"><h3>Quick prompts</h3><span>Start with a common telecom question</span></div>', unsafe_allow_html=True)
     prompt_cols = st.columns(4)
     quick_prompts = SUGGESTED_QUESTIONS[:4]
@@ -1663,12 +1644,6 @@ def render_sidebar():
             create_new_chat()
             st.rerun()
 
-        st.markdown('<div class="side-label">Navigation</div>', unsafe_allow_html=True)
-        for page, title, icon, _desc in NAV_ITEMS:
-            if st.button(f"{icon} {title}", key=f"nav_{page}", use_container_width=True):
-                st.session_state.page = page
-                st.rerun()
-
         st.markdown('<div class="side-label">Saved chats</div>', unsafe_allow_html=True)
         for chat in st.session_state.chat_sessions[:8]:
             label = "💬 " + chat["title"]
@@ -1680,6 +1655,12 @@ def render_sidebar():
         if st.button("Delete current chat", use_container_width=True):
             delete_current_chat()
             st.rerun()
+
+        st.markdown('<div class="side-label">Navigation</div>', unsafe_allow_html=True)
+        for page, title, icon, _desc in NAV_ITEMS:
+            if st.button(f"{icon} {title}", key=f"nav_{page}", use_container_width=True):
+                st.session_state.page = page
+                st.rerun()
 
         st.markdown('<div class="side-label">System</div>', unsafe_allow_html=True)
         db_status = "Connected" if DB_PATH.exists() else "Missing"
