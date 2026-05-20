@@ -1,9 +1,14 @@
 import os
 import time
+from pathlib import Path
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+
+APP_DIR = Path(__file__).resolve().parent
+LOGO_PATH = APP_DIR / "zain-logo.png"
+DB_PATH = APP_DIR / "zain_customer_360_ai_demo.db"
 
 
 def load_streamlit_secret():
@@ -27,7 +32,7 @@ from class3_sql_agent_backend import (  # noqa: E402
 
 st.set_page_config(
     page_title="Zain Customer 360",
-    page_icon="zain-logo.png",
+    page_icon=str(LOGO_PATH) if LOGO_PATH.exists() else "📊",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -43,6 +48,40 @@ st.markdown(
         background: linear-gradient(180deg, #11141b, #0b0d12);
         border-right: 1px solid #2b303b;
       }
+      section[data-testid="stSidebar"] > div {
+        padding: 1.2rem 1rem;
+      }
+      section[data-testid="stSidebar"] img {
+        max-width: 220px;
+        margin: 0 auto 1rem;
+        display: block;
+      }
+      .sidebar-title {
+        color: #8f96a3;
+        font-size: 0.74rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin: 0.6rem 0 0.5rem;
+      }
+      .nav-active {
+        border: 1px solid rgba(215, 25, 32, 0.62);
+        border-radius: 14px;
+        padding: 0.7rem 0.85rem;
+        margin-bottom: 0.55rem;
+        color: #ffffff;
+        background: linear-gradient(135deg, rgba(215, 25, 32, 0.28), rgba(32, 38, 53, 0.96));
+        box-shadow: 0 0 0 3px rgba(215, 25, 32, 0.15);
+        font-weight: 900;
+      }
+      .sidebar-caption {
+        border-top: 1px solid #2b303b;
+        margin-top: 1rem;
+        padding-top: 0.9rem;
+        color: #9da3af;
+        font-size: 0.78rem;
+        line-height: 1.45;
+      }
       .block-container {
         padding-top: 1.4rem;
       }
@@ -53,15 +92,22 @@ st.markdown(
         padding: 14px;
       }
       div.stButton > button {
+        width: 100%;
+        min-height: 44px;
         border-radius: 12px;
         border: 1px solid #303746;
         background: linear-gradient(180deg, #202635, #171b25);
         color: #f4f4f5;
         font-weight: 800;
+        text-align: left;
+        justify-content: flex-start;
+        padding-left: 0.9rem;
       }
       div.stButton > button:hover {
         border-color: rgba(215, 25, 32, 0.65);
         color: #ffffff;
+        background: linear-gradient(180deg, #2d3548, #1d2330);
+        transform: translateY(-1px);
       }
       div[data-testid="stAlert"] {
         border-radius: 10px;
@@ -92,6 +138,14 @@ SUGGESTED_QUESTIONS = [
     "Summarize recent support interactions by channel, reason, sentiment, and priority.",
 ]
 
+NAV_ITEMS = [
+    ("Chat", "💬 Chat"),
+    ("Overview", "📊 Overview"),
+    ("Chart Builder", "📈 Chart Builder"),
+    ("Suggested Questions", "✨ Suggested Questions"),
+    ("SQL Query Builder", "🧮 SQL Query Builder"),
+]
+
 
 def render_chart(chart):
     rows = chart.get("rows") or []
@@ -105,22 +159,22 @@ def render_chart(chart):
     st.subheader(title)
 
     if chart_type == "pie":
-        st.plotly_chart(px.pie(df, names="label", values="value", height=430), use_container_width=True)
+        st.plotly_chart(px.pie(df, names="label", values="value", height=430), width="stretch")
     elif chart_type == "doughnut":
-        st.plotly_chart(px.pie(df, names="label", values="value", hole=0.52, height=430), use_container_width=True)
+        st.plotly_chart(px.pie(df, names="label", values="value", hole=0.52, height=430), width="stretch")
     elif chart_type == "line":
-        st.plotly_chart(px.line(df, x="label", y="value", markers=True, height=430), use_container_width=True)
+        st.plotly_chart(px.line(df, x="label", y="value", markers=True, height=430), width="stretch")
     elif chart_type == "area":
-        st.plotly_chart(px.area(df, x="label", y="value", height=430), use_container_width=True)
+        st.plotly_chart(px.area(df, x="label", y="value", height=430), width="stretch")
     elif chart_type == "horizontal_bar":
-        st.plotly_chart(px.bar(df, x="value", y="label", orientation="h", height=430), use_container_width=True)
+        st.plotly_chart(px.bar(df, x="value", y="label", orientation="h", height=430), width="stretch")
     else:
-        st.plotly_chart(px.bar(df, x="label", y="value", height=430), use_container_width=True)
+        st.plotly_chart(px.bar(df, x="label", y="value", height=430), width="stretch")
 
     if chart.get("summary"):
         st.caption(chart["summary"])
     with st.expander("Chart data"):
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.dataframe(df, width="stretch", hide_index=True)
 
 
 def stream_markdown(text):
@@ -132,16 +186,16 @@ def stream_markdown(text):
         time.sleep(0.015)
 
 
-def render_sql_runner(default_sql=""):
+def render_sql_runner(default_sql="", key_prefix="sql_runner"):
     st.markdown("#### SQL Query Builder")
-    sql = st.text_area("SQL", value=default_sql, height=180, key="sql_editor")
-    if st.button("Run Query", type="primary"):
+    sql = st.text_area("SQL", value=default_sql, height=180, key=f"{key_prefix}_sql_editor")
+    if st.button("Run Query", type="primary", key=f"{key_prefix}_run_button"):
         try:
             result = execute_sql_query(sql)
             rows = result.get("rows", [])
             st.success(f"Returned {len(rows)} rows.")
             if rows:
-                st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+                st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
             else:
                 st.info("Query ran successfully but returned no rows.")
         except Exception as exc:
@@ -163,7 +217,7 @@ def show_overview():
             render_chart(chart)
 
     st.subheader("Tables and Row Counts")
-    st.dataframe(pd.DataFrame(data["tables"]), use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(data["tables"]), width="stretch", hide_index=True)
 
 
 def show_chart_builder():
@@ -198,7 +252,7 @@ def show_chat():
             st.markdown(message["content"])
             if message.get("sql"):
                 with st.expander("SQL Query"):
-                    render_sql_runner(message["sql"])
+                    render_sql_runner(message["sql"], key_prefix=f"history_{index}")
 
     prompt = st.chat_input("Ask a question about the Customer 360 database")
     if prompt:
@@ -211,7 +265,7 @@ def show_chat():
             stream_markdown(payload["answer"])
             if payload.get("sql"):
                 with st.expander("SQL Query"):
-                    render_sql_runner(payload["sql"])
+                    render_sql_runner(payload["sql"], key_prefix=f"current_{len(st.session_state.messages)}")
         st.session_state.messages.append(
             {"role": "assistant", "content": payload["answer"], "sql": payload.get("sql", "")}
         )
@@ -233,13 +287,29 @@ def show_suggested_questions():
 
 
 with st.sidebar:
-    st.image("zain-logo.png", use_container_width=True)
-    page = st.radio(
-        "Navigation",
-        ["Chat", "Overview", "Chart Builder", "Suggested Questions", "SQL Query Builder"],
-        label_visibility="collapsed",
+    if LOGO_PATH.exists():
+        st.image(str(LOGO_PATH), width="stretch")
+    else:
+        st.warning("Logo image was not found in the app folder.")
+
+    if "page" not in st.session_state:
+        st.session_state.page = "Chat"
+
+    active_label = dict(NAV_ITEMS)[st.session_state.page]
+    st.markdown('<div class="sidebar-title">Navigation</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="nav-active">{active_label}</div>', unsafe_allow_html=True)
+
+    for page_name, label in NAV_ITEMS:
+        if st.button(label, key=f"nav_{page_name}", type="secondary"):
+            st.session_state.page = page_name
+            st.rerun()
+
+    st.markdown(
+        f'<div class="sidebar-caption">Database: <code>{DB_PATH.name}</code><br>Logo: <code>{LOGO_PATH.name}</code></div>',
+        unsafe_allow_html=True,
     )
-    st.caption("Uses `zain_customer_360_ai_demo.db` and `zain-logo.png` from this app folder.")
+
+page = st.session_state.page
 
 if page == "Chat":
     show_chat()
@@ -252,4 +322,4 @@ elif page == "Suggested Questions":
 else:
     st.title("SQL Query Builder")
     st.caption("Safe runner for read-only SELECT queries.")
-    render_sql_runner("SELECT COUNT(*) AS total_customers FROM customers")
+    render_sql_runner("SELECT COUNT(*) AS total_customers FROM customers", key_prefix="standalone")
