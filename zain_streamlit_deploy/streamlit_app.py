@@ -180,8 +180,15 @@ def stream_markdown(text):
 
 def render_sql_runner(default_sql="", key_prefix="sql_runner"):
     st.markdown("#### SQL Query Builder")
-    sql = st.text_area("SQL", value=default_sql, height=180, key=f"{key_prefix}_sql_editor")
-    if st.button("Run Query", type="primary", key=f"{key_prefix}_run_button"):
+    editor_key = f"{key_prefix}_sql_editor"
+    if editor_key not in st.session_state:
+        st.session_state[editor_key] = default_sql
+
+    with st.form(key=f"{key_prefix}_form"):
+        sql = st.text_area("SQL", height=180, key=editor_key)
+        submitted = st.form_submit_button("Run Query", type="primary")
+
+    if submitted:
         try:
             result = execute_sql_query(sql)
             rows = result.get("rows", [])
