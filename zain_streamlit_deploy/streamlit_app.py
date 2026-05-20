@@ -1621,12 +1621,7 @@ def render_sidebar():
             unsafe_allow_html=True,
         )
 
-        st.session_state.theme_mode = st.radio(
-            "Appearance",
-            ["Dark", "Light"],
-            horizontal=True,
-            index=0 if st.session_state.theme_mode == "Dark" else 1,
-        )
+        st.session_state.theme_mode = "Dark"
 
         st.markdown('<div class="side-label">Current workspace</div>', unsafe_allow_html=True)
         active_item = next((item for item in NAV_ITEMS if item[0] == st.session_state.page), NAV_ITEMS[0])
@@ -1661,22 +1656,6 @@ def render_sidebar():
             if st.button(f"{icon} {title}", key=f"nav_{page}", use_container_width=True):
                 st.session_state.page = page
                 st.rerun()
-
-        st.markdown('<div class="side-label">System</div>', unsafe_allow_html=True)
-        db_status = "Connected" if DB_PATH.exists() else "Missing"
-        key_status = "Configured" if os.environ.get("OPENAI_API_KEY") else "Missing"
-        st.markdown(
-            f"""
-            <div class="brand-card">
-              <div class="brand-copy">
-                Database: <span class="status-good">{db_status}</span><br>
-                OpenAI key: <span class="{'status-good' if key_status == 'Configured' else 'status-warn'}">{key_status}</span><br>
-                Mode: {st.session_state.theme_mode}
-              </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
 
 
 def main():
