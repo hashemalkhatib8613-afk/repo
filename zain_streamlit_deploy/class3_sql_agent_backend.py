@@ -14,6 +14,11 @@ BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "zain_customer_360_ai_demo.db"
 MODEL_NAME = "gpt-4.1-mini"
 TOP_K = 5
+NON_DATABASE_PATTERNS = (
+    r"^\s*(hi|hello|hey|مرحبا|اهلا|أهلا|السلام عليكم)\s*[!.؟?]*\s*$",
+    r"^\s*(thanks|thank you|شكرا|شكرًا)\s*[!.؟?]*\s*$",
+    r"^\s*(how are you|كيفك|كيف الحال)\s*[!.؟?]*\s*$",
+)
 
 
 def load_openai_key():
@@ -261,6 +266,12 @@ Rules:
 
 def answer_direct_query(question):
     q = question.lower()
+    if any(re.search(pattern, q, flags=re.IGNORECASE) for pattern in NON_DATABASE_PATTERNS):
+        return {
+            "answer": "Hello. Ask me a question about customers, churn, complaints, billing, campaigns, network events, or anything in the Customer 360 database.",
+            "sql": "",
+        }
+
     limit_match = re.search(r"\btop\s+(\d+)|\blimit\s+(\d+)", q)
     limit = int(next(value for value in limit_match.groups() if value)) if limit_match else 10
     limit = max(1, min(limit, 25))
@@ -606,6 +617,10 @@ _SQL_AGENT = None
 
 
 def plan_sql_for_question(question):
+    q = question.lower()
+    if any(re.search(pattern, q, flags=re.IGNORECASE) for pattern in NON_DATABASE_PATTERNS):
+        return ""
+
     load_openai_key()
     if not os.environ.get("OPENAI_API_KEY"):
         return ""
