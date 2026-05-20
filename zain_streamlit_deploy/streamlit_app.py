@@ -164,20 +164,20 @@ st.markdown(
       }
 
       /* ================================
-         CHAT LIST - FINAL FIX
+         CHAT LIST - FINAL STYLE
          ================================ */
 
       section[data-testid="stSidebar"] [class*="st-key-chat_item_"] {
         border: 1px solid #2d3340;
         border-radius: 16px;
-        padding: 0.35rem 0.4rem 0.45rem 0.4rem;
+        padding: 0.35rem 0.35rem 0.45rem 0.4rem;
         margin-bottom: 0.55rem;
         background: linear-gradient(180deg, rgba(18, 23, 34, 0.96), rgba(10, 14, 22, 0.96));
       }
 
       section[data-testid="stSidebar"] [class*="st-key-chat_item_"] div[data-testid="stHorizontalBlock"] {
         align-items: center;
-        gap: 0.3rem;
+        gap: 0.15rem;
       }
 
       section[data-testid="stSidebar"] [class*="st-key-chat_select_wrap_"] div.stButton > button {
@@ -190,29 +190,53 @@ st.markdown(
       }
 
       section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] div.stButton > button {
-        width: 34px !important;
-        min-width: 34px !important;
-        height: 34px !important;
-        min-height: 34px !important;
+        width: 30px !important;
+        min-width: 30px !important;
+        height: 30px !important;
+        min-height: 30px !important;
         border-radius: 999px !important;
         padding: 0 !important;
-        margin: 0.1rem 0 0 0 !important;
+
+        /* Move the dots slightly left */
+        margin: 0.1rem 0 0 -0.45rem !important;
+
+        /* Fully transparent button */
         background: transparent !important;
+        background-color: transparent !important;
         border: none !important;
         box-shadow: none !important;
+        outline: none !important;
+
         color: #d8dde8 !important;
-        font-size: 1.2rem !important;
+        font-size: 1.15rem !important;
         font-weight: 900 !important;
+        line-height: 1 !important;
+
         text-align: center !important;
         justify-content: center !important;
         align-items: center !important;
       }
 
       section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] div.stButton > button:hover {
-        background: rgba(255, 255, 255, 0.08) !important;
+        background: rgba(255, 255, 255, 0.06) !important;
+        background-color: rgba(255, 255, 255, 0.06) !important;
         border: none !important;
+        box-shadow: none !important;
         transform: none !important;
         color: #ffffff !important;
+      }
+
+      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] div.stButton > button:focus,
+      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] div.stButton > button:active {
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        outline: none !important;
+      }
+
+      section[data-testid="stSidebar"] [class*="st-key-chat_actions_wrap_"] {
+        margin-top: 0.35rem;
       }
 
       section[data-testid="stSidebar"] [class*="st-key-chat_actions_wrap_"] div.stButton > button {
@@ -222,6 +246,10 @@ st.markdown(
         font-size: 0.84rem !important;
         justify-content: center !important;
         text-align: center !important;
+      }
+
+      section[data-testid="stSidebar"] [class*="st-key-chat_rename_wrap_"] {
+        margin-top: 0.35rem;
       }
 
       section[data-testid="stSidebar"] [class*="st-key-chat_rename_wrap_"] input {
@@ -700,6 +728,7 @@ with st.sidebar:
                 with row_col:
                     with st.container(key=f"chat_select_wrap_{chat['id']}"):
                         label = "💬 " + chat["title"]
+
                         if st.button(label, key=f"select_{chat['id']}", type="secondary"):
                             st.session_state.current_chat_id = chat["id"]
                             st.session_state.page = "Chat"
@@ -713,6 +742,7 @@ with st.sidebar:
                                 st.session_state.open_chat_menu_id = None
                             else:
                                 st.session_state.open_chat_menu_id = chat["id"]
+
                             st.rerun()
 
                 if st.session_state.open_chat_menu_id == chat["id"]:
