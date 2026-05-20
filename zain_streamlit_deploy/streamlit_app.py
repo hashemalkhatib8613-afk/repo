@@ -33,8 +33,8 @@ from class3_sql_agent_backend import (  # noqa: E402
 
 
 st.set_page_config(
-    page_title="Zain Customer 360",
-    page_icon=str(LOGO_PATH) if LOGO_PATH.exists() else "📊",
+    page_title="Zain 360 Copilot",
+    page_icon=str(LOGO_PATH) if LOGO_PATH.exists() else "💬",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -55,292 +55,411 @@ LOGO_DATA_URI = get_logo_data_uri()
 st.markdown(
     """
     <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+      html, body, [class*="css"] {
+        font-family: "Inter", sans-serif !important;
+      }
+
       .stApp {
-        background: #0b0d12;
-        color: #f4f4f5;
-      }
-
-      section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #11141b, #0b0d12);
-        border-right: 1px solid #2b303b;
-      }
-
-      section[data-testid="stSidebar"] > div {
-        padding: 1.2rem 1rem;
-      }
-
-      .sidebar-hero {
-        border: 1px solid #303746;
-        border-radius: 16px;
-        padding: 0.95rem;
-        margin: 0.35rem 0 1rem;
-        background:
-          radial-gradient(circle at 15% 0%, rgba(215, 25, 32, 0.24), transparent 34%),
-          linear-gradient(180deg, rgba(32, 38, 53, 0.98), rgba(17, 20, 27, 0.98));
-        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
-      }
-
-      .sidebar-hero-title {
-        color: #ffffff;
-        font-size: 1rem;
-        font-weight: 900;
-        line-height: 1.25;
-        margin-bottom: 0.35rem;
-      }
-
-      .sidebar-hero-copy {
-        color: #b6bcc8;
-        font-size: 0.78rem;
-        line-height: 1.45;
-      }
-
-      .sidebar-chips {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.38rem;
-        margin-top: 0.75rem;
-      }
-
-      .sidebar-chip {
-        border: 1px solid rgba(255, 255, 255, 0.09);
-        border-radius: 999px;
-        padding: 0.26rem 0.48rem;
-        color: #f4f4f5;
-        background: rgba(255, 255, 255, 0.06);
-        font-size: 0.67rem;
-        font-weight: 800;
+        background: #edf2f8;
+        color: #111827;
       }
 
       .block-container {
-        padding-top: 1.4rem;
-        padding-bottom: 7rem;
+        max-width: 980px;
+        padding-top: 2.1rem;
+        padding-bottom: 7.5rem;
       }
 
-      div[data-testid="stMetric"] {
-        background: linear-gradient(180deg, #202635, #171b25);
-        border: 1px solid #303746;
-        border-radius: 10px;
-        padding: 14px;
+      /* ================================
+         SIDEBAR - FIGMA STYLE
+         ================================ */
+
+      section[data-testid="stSidebar"] {
+        background: #d9e4f2;
+        border-right: 0;
+        width: 285px !important;
       }
 
-      div.stButton > button {
-        width: 100%;
-        min-height: 44px;
-        border-radius: 12px;
-        border: 1px solid #303746;
-        background: linear-gradient(180deg, #202635, #171b25);
-        color: #f4f4f5;
+      section[data-testid="stSidebar"] > div {
+        padding: 1.05rem 0.85rem;
+      }
+
+      section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {
+        background: #ffffff;
+        border-radius: 22px;
+        padding: 1.15rem 0.9rem;
+        margin: 0.55rem;
+        min-height: calc(100vh - 1.1rem);
+        box-shadow: 0 22px 55px rgba(31, 41, 55, 0.08);
+      }
+
+      .sidebar-brand {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.2rem;
+        padding: 0 0.1rem;
+      }
+
+      .sidebar-brand-title {
+        color: #0f172a;
+        font-size: 1.18rem;
         font-weight: 800;
-        text-align: left;
-        justify-content: flex-start;
-        padding-left: 0.9rem;
+        letter-spacing: 0.28em;
       }
 
-      div.stButton > button:hover {
-        border-color: rgba(215, 25, 32, 0.65);
-        color: #ffffff;
-        background: linear-gradient(180deg, #2d3548, #1d2330);
-        transform: translateY(-1px);
+      .sidebar-brand-plus {
+        color: #111827;
+        font-weight: 700;
+        font-size: 1rem;
+        letter-spacing: 0;
+        margin-left: 0.25rem;
       }
 
-      section[data-testid="stSidebar"] div.stButton > button[kind="primary"] {
-        border: 1px solid rgba(215, 25, 32, 0.62) !important;
-        color: #ffffff !important;
-        background: linear-gradient(135deg, rgba(215, 25, 32, 0.28), rgba(32, 38, 53, 0.96)) !important;
-        box-shadow: 0 0 0 3px rgba(215, 25, 32, 0.15) !important;
-        font-weight: 900 !important;
+      .sidebar-top-actions {
+        display: grid;
+        grid-template-columns: 1fr 42px;
+        gap: 0.55rem;
+        margin-bottom: 1.1rem;
+      }
+
+      .sidebar-section-line {
+        height: 1px;
+        background: #eef1f5;
+        margin: 0.95rem -0.9rem 0.75rem;
+      }
+
+      .sidebar-small-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #7c8798;
+        font-size: 0.72rem;
+        margin: 0.2rem 0 0.55rem;
+      }
+
+      .sidebar-clear {
+        color: #5a67ff;
+        font-weight: 600;
+        font-size: 0.7rem;
       }
 
       .sidebar-footnote {
-        margin-top: 1rem;
-        border-top: 1px solid #2b303b;
-        padding-top: 0.8rem;
-        color: #8f96a3;
+        margin-top: 1.25rem;
+        border-top: 1px solid #eef1f5;
+        padding-top: 0.9rem;
+        color: #8c95a3;
         font-size: 0.72rem;
         line-height: 1.45;
       }
 
-      /* ================================
-         PAGE HEADER WITH LOGO
-         ================================ */
-
-      .page-brand-card {
-        position: relative;
+      section[data-testid="stSidebar"] div.stButton > button {
         width: 100%;
-        min-height: 132px;
-        border: 1px solid #303746;
-        border-radius: 22px;
-        padding: 1.35rem 13.5rem 1.35rem 1.35rem;
-        margin-bottom: 1.2rem;
-        overflow: hidden;
-        background:
-          radial-gradient(circle at 92% 20%, rgba(215, 25, 32, 0.18), transparent 25%),
-          radial-gradient(circle at 8% 0%, rgba(255, 255, 255, 0.06), transparent 26%),
-          linear-gradient(180deg, rgba(27, 33, 46, 0.98), rgba(13, 18, 28, 0.98));
-        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+        min-height: 42px;
+        border-radius: 14px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: #111827;
+        font-weight: 600;
+        font-size: 0.82rem;
+        text-align: left;
+        justify-content: flex-start;
+        padding: 0.55rem 0.7rem;
+        box-shadow: none;
       }
 
-      .page-brand-card::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 310px;
-        height: 100%;
-        background:
-          linear-gradient(90deg, transparent, rgba(215, 25, 32, 0.06)),
-          radial-gradient(circle at 75% 45%, rgba(255, 255, 255, 0.08), transparent 36%);
-        pointer-events: none;
+      section[data-testid="stSidebar"] div.stButton > button:hover {
+        background: #f5f7fb;
+        border-color: #eef1f5;
+        color: #111827;
+        transform: none;
       }
 
-      .page-brand-content {
-        position: relative;
-        z-index: 2;
+      section[data-testid="stSidebar"] div.stButton > button[kind="primary"] {
+        background: #5b5cf6 !important;
+        border-color: #5b5cf6 !important;
+        color: #ffffff !important;
+        box-shadow: 0 10px 22px rgba(91, 92, 246, 0.25) !important;
       }
 
-      .page-brand-eyebrow {
-        color: #aeb6c4;
-        font-size: 0.74rem;
-        font-weight: 900;
-        letter-spacing: 0.09em;
-        text-transform: uppercase;
-        margin-bottom: 0.4rem;
+      /* New chat button */
+      section[data-testid="stSidebar"] [class*="st-key-sidebar_new_chat"] button {
+        background: #5b5cf6 !important;
+        color: #ffffff !important;
+        justify-content: center !important;
+        text-align: center !important;
+        min-height: 40px !important;
+        border-radius: 14px !important;
       }
 
-      .page-brand-title {
-        color: #ffffff;
-        font-size: 1.85rem;
-        font-weight: 950;
-        line-height: 1.12;
-        margin-bottom: 0.45rem;
+      /* Search circle button look */
+      section[data-testid="stSidebar"] [class*="st-key-sidebar_search_fake"] button {
+        background: #050505 !important;
+        color: #ffffff !important;
+        border-radius: 999px !important;
+        min-height: 42px !important;
+        width: 42px !important;
+        padding: 0 !important;
+        justify-content: center !important;
+        text-align: center !important;
       }
 
-      .page-brand-copy {
-        color: #b6bcc8;
-        font-size: 0.94rem;
-        line-height: 1.55;
-        max-width: 760px;
+      /* Expander styling */
+      section[data-testid="stSidebar"] details {
+        border: 0 !important;
       }
 
-      .page-brand-logo {
-        position: absolute;
-        z-index: 3;
-        top: 50%;
-        right: 1.55rem;
-        transform: translateY(-50%);
-        width: 148px;
-        max-width: 148px;
-        height: auto;
-        opacity: 0.88;
-        object-fit: contain;
-        filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.35));
+      section[data-testid="stSidebar"] details summary {
+        font-weight: 700;
+        color: #111827;
+        font-size: 0.84rem;
       }
 
       /* ================================
-         CHAT LIST
+         CHAT ITEMS
          ================================ */
 
       section[data-testid="stSidebar"] [class*="st-key-chat_item_"] {
-        border: 1px solid #2d3340;
-        border-radius: 16px;
-        padding: 0.35rem 0.35rem 0.45rem 0.4rem;
-        margin-bottom: 0.55rem;
-        background: linear-gradient(180deg, rgba(18, 23, 34, 0.96), rgba(10, 14, 22, 0.96));
+        border-radius: 14px;
+        padding: 0.15rem 0.15rem;
+        margin-bottom: 0.26rem;
+        background: transparent;
       }
 
       section[data-testid="stSidebar"] [class*="st-key-chat_item_"] div[data-testid="stHorizontalBlock"] {
         align-items: center;
-        gap: 0.15rem;
+        gap: 0.05rem;
       }
 
       section[data-testid="stSidebar"] [class*="st-key-chat_select_wrap_"] div.stButton > button {
         width: 100% !important;
-        min-height: 52px !important;
-        border-radius: 13px !important;
-        padding: 0.7rem 0.8rem !important;
-        text-align: left !important;
-        justify-content: flex-start !important;
+        min-height: 36px !important;
+        border-radius: 12px !important;
+        padding: 0.45rem 0.55rem !important;
+        font-size: 0.78rem !important;
+        color: #374151 !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        overflow: hidden;
+      }
+
+      section[data-testid="stSidebar"] [class*="st-key-chat_select_wrap_"] div.stButton > button[kind="primary"] {
+        color: #5b5cf6 !important;
+        background: #f2f3ff !important;
+        border: none !important;
+        box-shadow: none !important;
       }
 
       section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"],
       section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] div,
       section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] div.stButton {
         background: transparent !important;
-        background-color: transparent !important;
         border: none !important;
         box-shadow: none !important;
       }
 
       section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button,
       section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button {
-        width: 28px !important;
-        min-width: 28px !important;
-        height: 28px !important;
-        min-height: 28px !important;
+        width: 24px !important;
+        min-width: 24px !important;
+        height: 24px !important;
+        min-height: 24px !important;
         padding: 0 !important;
-        margin: 0.1rem 0 0 -0.6rem !important;
+        margin: 0 !important;
         background: transparent !important;
         background-color: transparent !important;
-        background-image: none !important;
         border: none !important;
-        outline: none !important;
         box-shadow: none !important;
-        color: #d8dde8 !important;
-        font-size: 1.15rem !important;
-        font-weight: 900 !important;
-        line-height: 1 !important;
+        color: #7b8494 !important;
+        font-size: 1rem !important;
+        font-weight: 800 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
-        text-align: center !important;
       }
 
       section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button:hover,
-      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button:focus,
-      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button:active,
-      section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button:hover,
-      section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button:focus,
-      section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button:active {
+      section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button:hover {
         background: transparent !important;
-        background-color: transparent !important;
-        background-image: none !important;
-        border: none !important;
-        outline: none !important;
-        box-shadow: none !important;
+        color: #111827 !important;
         transform: none !important;
-        color: #ffffff !important;
       }
 
       section[data-testid="stSidebar"] [class*="st-key-chat_actions_wrap_"] {
-        margin-top: 0.35rem;
+        margin: 0.2rem 0 0.35rem 0.55rem;
       }
 
       section[data-testid="stSidebar"] [class*="st-key-chat_actions_wrap_"] div.stButton > button {
-        min-height: 36px !important;
+        min-height: 31px !important;
         border-radius: 10px !important;
-        padding: 0.45rem 0.65rem !important;
-        font-size: 0.84rem !important;
+        padding: 0.35rem 0.55rem !important;
+        font-size: 0.74rem !important;
         justify-content: center !important;
         text-align: center !important;
-      }
-
-      section[data-testid="stSidebar"] [class*="st-key-chat_rename_wrap_"] {
-        margin-top: 0.35rem;
+        background: #f5f7fb !important;
+        border: 1px solid #eef1f5 !important;
       }
 
       section[data-testid="stSidebar"] [class*="st-key-chat_rename_wrap_"] input {
-        min-height: 42px;
-        border-radius: 10px;
+        min-height: 38px;
+        border-radius: 12px;
       }
 
       /* ================================
-         SQL VIEWER
+         MAIN PAGE HEADER
          ================================ */
 
-      div[data-testid="stCodeBlock"] {
-        border-radius: 14px;
-        border: 1px solid #303746;
+      .page-brand-card {
+        position: relative;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        width: 100%;
+        margin-bottom: 1.2rem;
+      }
+
+      .page-brand-eyebrow {
+        color: #5b5cf6;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        margin-bottom: 0.28rem;
+      }
+
+      .page-brand-title {
+        color: #111827;
+        font-size: 1.62rem;
+        font-weight: 800;
+        letter-spacing: -0.035em;
+        line-height: 1.1;
+        margin-bottom: 0.5rem;
+      }
+
+      .page-brand-copy {
+        color: #4b5563;
+        font-size: 0.9rem;
+        line-height: 1.55;
+        max-width: 720px;
+      }
+
+      .page-brand-logo {
+        width: 118px;
+        max-width: 118px;
+        height: auto;
+        opacity: 0.42;
+        object-fit: contain;
+        margin-top: 0.1rem;
+      }
+
+      /* ================================
+         CHAT AREA
+         ================================ */
+
+      div[data-testid="stChatMessage"] {
+        background: transparent;
+        padding: 0.3rem 0;
+      }
+
+      div[data-testid="stChatMessage"] [data-testid="chatAvatarIcon-user"],
+      div[data-testid="stChatMessage"] [data-testid="chatAvatarIcon-assistant"] {
+        border-radius: 999px;
+      }
+
+      div[data-testid="stChatMessageContent"] {
+        color: #111827;
+        font-size: 0.9rem;
+        line-height: 1.65;
+      }
+
+      div[data-testid="stChatMessageContent"] p {
+        margin-bottom: 0.75rem;
+      }
+
+      hr {
+        border-color: #dce4ef;
+      }
+
+      /* ================================
+         METRICS / TABLES / CHARTS
+         ================================ */
+
+      div[data-testid="stMetric"] {
+        background: #ffffff;
+        border: 1px solid #e7ecf3;
+        border-radius: 18px;
+        padding: 15px;
+        box-shadow: 0 16px 34px rgba(31, 41, 55, 0.05);
+      }
+
+      div[data-testid="stDataFrame"] {
+        border-radius: 18px;
         overflow: hidden;
+      }
+
+      .stPlotlyChart {
+        background: #ffffff;
+        border: 1px solid #e7ecf3;
+        border-radius: 20px;
+        padding: 0.75rem;
+        box-shadow: 0 16px 34px rgba(31, 41, 55, 0.05);
+      }
+
+      div[data-testid="stCodeBlock"] {
+        border-radius: 16px;
+        border: 1px solid #e1e7f0;
+        overflow: hidden;
+      }
+
+      div[data-testid="stExpander"] {
+        border: 1px solid #e3e9f2;
+        border-radius: 16px;
+        background: #ffffff;
+        box-shadow: 0 12px 28px rgba(31, 41, 55, 0.04);
+      }
+
+      div[data-testid="stAlert"] {
+        border-radius: 14px;
+      }
+
+      /* Main buttons */
+      .main div.stButton > button {
+        width: auto;
+        min-height: 40px;
+        border-radius: 14px;
+        border: 1px solid #e1e7f0;
+        background: #ffffff;
+        color: #111827;
+        font-weight: 700;
+        justify-content: center;
+        text-align: center;
+        padding: 0.55rem 0.9rem;
+        box-shadow: 0 12px 26px rgba(31, 41, 55, 0.05);
+      }
+
+      .main div.stButton > button:hover {
+        border-color: #5b5cf6;
+        color: #5b5cf6;
+        background: #ffffff;
+        transform: none;
+      }
+
+      .main div.stButton > button[kind="primary"] {
+        background: #5b5cf6 !important;
+        color: #ffffff !important;
+        border-color: #5b5cf6 !important;
+        box-shadow: 0 14px 26px rgba(91, 92, 246, 0.22) !important;
+      }
+
+      textarea,
+      input {
+        border-radius: 16px !important;
+        border-color: #dfe6f0 !important;
+        background: #ffffff !important;
+        color: #111827 !important;
       }
 
       /* ================================
@@ -349,16 +468,17 @@ st.markdown(
 
       .st-key-fixed_chat_bar {
         position: fixed;
-        left: 23rem;
-        right: 2rem;
-        bottom: 0.9rem;
+        left: calc(285px + 50%);
+        transform: translateX(-50%);
+        bottom: 1.45rem;
         z-index: 1001;
-        max-width: calc(100vw - 25rem);
-        border: 1px solid #303746;
-        border-radius: 16px;
-        padding: 0.75rem;
-        background: rgba(17, 20, 27, 0.98);
-        box-shadow: 0 -18px 42px rgba(0, 0, 0, 0.28);
+        width: min(720px, calc(100vw - 360px));
+        border: 1px solid #e5eaf2;
+        border-radius: 999px;
+        padding: 0.42rem 0.45rem 0.42rem 0.85rem;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 20px 50px rgba(31, 41, 55, 0.16);
+        backdrop-filter: blur(18px);
       }
 
       .st-key-fixed_chat_bar [data-testid="stForm"] {
@@ -368,8 +488,8 @@ st.markdown(
       }
 
       .st-key-fixed_chat_bar div[data-testid="stHorizontalBlock"] {
-        align-items: end;
-        gap: 0.75rem;
+        align-items: center;
+        gap: 0.45rem;
       }
 
       .st-key-fixed_chat_bar div[data-testid="column"] {
@@ -378,51 +498,70 @@ st.markdown(
       }
 
       .st-key-fixed_chat_bar input {
-        width: 100% !important;
-        min-height: 48px;
-        border-radius: 12px;
+        border: 0 !important;
+        min-height: 44px;
+        background: transparent !important;
+        box-shadow: none !important;
+        font-size: 0.82rem !important;
+      }
+
+      .st-key-fixed_chat_bar input:focus {
+        border: 0 !important;
+        box-shadow: none !important;
+        outline: none !important;
       }
 
       .st-key-fixed_chat_bar button {
-        min-height: 48px !important;
+        width: 42px !important;
+        min-width: 42px !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        border-radius: 999px !important;
+        padding: 0 !important;
         justify-content: center !important;
         align-items: center !important;
-        border-radius: 12px !important;
-        white-space: nowrap;
         text-align: center !important;
-        padding-left: 0.8rem !important;
-        padding-right: 0.8rem !important;
+        background: linear-gradient(135deg, #7b61ff, #4f46e5) !important;
+        color: #ffffff !important;
+        border: 0 !important;
+        box-shadow: 0 12px 24px rgba(79, 70, 229, 0.28) !important;
+        font-size: 0 !important;
+      }
+
+      .st-key-fixed_chat_bar button::after {
+        content: "➤";
+        font-size: 1rem;
+        line-height: 1;
       }
 
       @media (max-width: 900px) {
+        section[data-testid="stSidebar"] {
+          width: auto !important;
+        }
+
+        .block-container {
+          padding-left: 1rem;
+          padding-right: 1rem;
+        }
+
         .st-key-fixed_chat_bar {
           left: 1rem;
           right: 1rem;
-          max-width: calc(100vw - 2rem);
+          transform: none;
+          width: auto;
         }
 
         .page-brand-card {
-          padding: 1.15rem;
-          min-height: auto;
+          flex-direction: column;
         }
 
         .page-brand-logo {
-          position: relative;
-          top: auto;
-          right: auto;
-          transform: none;
-          display: block;
-          width: 120px;
-          margin: 1rem 0 0 auto;
+          width: 90px;
         }
 
         .page-brand-title {
           font-size: 1.35rem;
         }
-      }
-
-      div[data-testid="stAlert"] {
-        border-radius: 10px;
       }
     </style>
     """,
@@ -440,13 +579,19 @@ CHART_TYPES = {
 }
 
 SUGGESTED_QUESTIONS = [
+    "Show me the full profile, plan, complaints, churn risk, invoices, and recommended action for customer ID 9.",
     "Find the top 10 customers with the highest churn score and explain why they are at risk.",
-    "Which customer segments bring the most revenue in the last 6 months?",
-    "What are the most common complaint categories and which ones are still unresolved?",
-    "Which cities have the highest number of affected customers from network events?",
-    "Which marketing campaigns have the best conversion rate?",
-    "Show me the full profile, plan, complaints, churn risk, and recommended action for customer 42.",
     "Which customers have overdue invoices and high churn risk?",
+    "What are the most common complaint categories and how many are still unresolved?",
+    "Which marketing campaigns have the best conversion rate?",
+    "Which customer segments bring the most revenue in the last 6 months?",
+    "Which cities have the highest number of affected customers from network events?",
+    "Show customer distribution by city.",
+    "Which customers have the highest data usage this month?",
+    "Which customers generated the highest roaming cost?",
+    "Which customers have 5G capable devices but are not on a 5G plan?",
+    "Which add-ons are most used by customers?",
+    "Which payment channels are used the most?",
     "Summarize recent support interactions by channel, reason, sentiment, and priority.",
 ]
 
@@ -480,7 +625,7 @@ def render_page_brand(page_key, title, subtitle):
         f"""
         <div class="page-brand-card" id="page-brand-{page_key}">
           <div class="page-brand-content">
-            <div class="page-brand-eyebrow">Zain Customer 360</div>
+            <div class="page-brand-eyebrow">CHAT A.I +</div>
             <div class="page-brand-title">{title}</div>
             <div class="page-brand-copy">{subtitle}</div>
           </div>
@@ -601,35 +746,17 @@ def render_chart(chart):
     st.subheader(title)
 
     if chart_type == "pie":
-        st.plotly_chart(
-            px.pie(df, names="label", values="value", height=430),
-            width="stretch",
-        )
+        st.plotly_chart(px.pie(df, names="label", values="value", height=430), width="stretch")
     elif chart_type == "doughnut":
-        st.plotly_chart(
-            px.pie(df, names="label", values="value", hole=0.52, height=430),
-            width="stretch",
-        )
+        st.plotly_chart(px.pie(df, names="label", values="value", hole=0.52, height=430), width="stretch")
     elif chart_type == "line":
-        st.plotly_chart(
-            px.line(df, x="label", y="value", markers=True, height=430),
-            width="stretch",
-        )
+        st.plotly_chart(px.line(df, x="label", y="value", markers=True, height=430), width="stretch")
     elif chart_type == "area":
-        st.plotly_chart(
-            px.area(df, x="label", y="value", height=430),
-            width="stretch",
-        )
+        st.plotly_chart(px.area(df, x="label", y="value", height=430), width="stretch")
     elif chart_type == "horizontal_bar":
-        st.plotly_chart(
-            px.bar(df, x="value", y="label", orientation="h", height=430),
-            width="stretch",
-        )
+        st.plotly_chart(px.bar(df, x="value", y="label", orientation="h", height=430), width="stretch")
     else:
-        st.plotly_chart(
-            px.bar(df, x="label", y="value", height=430),
-            width="stretch",
-        )
+        st.plotly_chart(px.bar(df, x="label", y="value", height=430), width="stretch")
 
     if chart.get("summary"):
         st.caption(chart["summary"])
@@ -767,12 +894,12 @@ def show_chat():
 
     with chat_bar:
         with st.form("fixed_chat_form", clear_on_submit=True):
-            input_col, send_col = st.columns([8, 1.4])
+            input_col, send_col = st.columns([8, 1])
 
             with input_col:
                 prompt = st.text_input(
                     "Question",
-                    placeholder="Ask a question about the Customer 360 database",
+                    placeholder="What’s in your mind?...",
                     label_visibility="collapsed",
                 )
 
@@ -791,7 +918,7 @@ def show_chat():
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            with st.spinner("Asking the SQL agent..."):
+            with st.spinner("Thinking..."):
                 payload = ask_sql_agent_payload(prompt)
 
             stream_markdown(payload["answer"])
@@ -825,7 +952,7 @@ def show_suggested_questions():
 
             chat["messages"].append({"role": "user", "content": question})
 
-            with st.spinner("Asking the SQL agent..."):
+            with st.spinner("Thinking..."):
                 payload = ask_sql_agent_payload(question)
 
             chat["messages"].append(
@@ -856,15 +983,9 @@ def show_sql_builder_page():
 with st.sidebar:
     st.markdown(
         """
-        <div class="sidebar-hero">
-          <div class="sidebar-hero-title">Customer 360 AI Copilot</div>
-          <div class="sidebar-hero-copy">
-            Explore subscribers, churn, complaints, campaigns, billing, and network signals from one conversational workspace.
-          </div>
-          <div class="sidebar-chips">
-            <span class="sidebar-chip">SQL-backed</span>
-            <span class="sidebar-chip">Charts</span>
-            <span class="sidebar-chip">Overview</span>
+        <div class="sidebar-brand">
+          <div>
+            <span class="sidebar-brand-title">CHAT A.I</span><span class="sidebar-brand-plus">+</span>
           </div>
         </div>
         """,
@@ -876,9 +997,26 @@ with st.sidebar:
 
     init_chat_sessions()
 
-    if st.button("＋ New Chat", key="sidebar_new_chat", type="primary"):
-        create_new_chat()
-        st.rerun()
+    top_col_1, top_col_2 = st.columns([4, 1.2])
+
+    with top_col_1:
+        if st.button("＋  New chat", key="sidebar_new_chat", type="primary"):
+            create_new_chat()
+            st.rerun()
+
+    with top_col_2:
+        st.button("⌕", key="sidebar_search_fake")
+
+    st.markdown(
+        """
+        <div class="sidebar-section-line"></div>
+        <div class="sidebar-small-row">
+          <span>Your conversations</span>
+          <span class="sidebar-clear">Clear All</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     with st.expander("Chats", expanded=True):
         for chat in list(st.session_state.chat_sessions):
@@ -887,7 +1025,7 @@ with st.sidebar:
 
                 with row_col:
                     with st.container(key=f"chat_select_wrap_{chat['id']}"):
-                        label = "💬 " + chat["title"]
+                        label = "▱  " + chat["title"]
                         chat_type = (
                             "primary"
                             if st.session_state.page == "Chat"
@@ -949,6 +1087,13 @@ with st.sidebar:
                                 st.session_state.rename_chat_id = None
                                 st.session_state.rename_chat_value = ""
                                 st.rerun()
+
+    st.markdown(
+        """
+        <div class="sidebar-section-line"></div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     for page_name, label in NAV_ITEMS:
         nav_button_type = "primary" if st.session_state.page == page_name else "secondary"
