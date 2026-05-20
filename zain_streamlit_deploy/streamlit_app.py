@@ -1,5 +1,6 @@
 import os
 import time
+import base64
 from pathlib import Path
 
 import pandas as pd
@@ -36,6 +37,19 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+
+def get_logo_data_uri():
+    if not LOGO_PATH.exists():
+        return ""
+
+    image_bytes = LOGO_PATH.read_bytes()
+    encoded = base64.b64encode(image_bytes).decode("utf-8")
+    return f"data:image/png;base64,{encoded}"
+
+
+LOGO_DATA_URI = get_logo_data_uri()
+
 
 st.markdown(
     """
@@ -128,7 +142,6 @@ st.markdown(
         transform: translateY(-1px);
       }
 
-      /* Active sidebar option highlight */
       section[data-testid="stSidebar"] div.stButton > button[kind="primary"] {
         border: 1px solid rgba(215, 25, 32, 0.62) !important;
         color: #ffffff !important;
@@ -147,55 +160,83 @@ st.markdown(
       }
 
       /* ================================
-         PAGE HEADER / BRAND CARD
+         PAGE HEADER WITH LOGO - FIXED
          ================================ */
 
-      section.main [class*="st-key-page_brand_"] {
+      .page-brand-card {
+        position: relative;
+        width: 100%;
+        min-height: 132px;
         border: 1px solid #303746;
-        border-radius: 20px;
-        padding: 1.05rem 1.1rem;
-        margin-bottom: 1rem;
+        border-radius: 22px;
+        padding: 1.35rem 13.5rem 1.35rem 1.35rem;
+        margin-bottom: 1.2rem;
+        overflow: hidden;
         background:
-          radial-gradient(circle at 88% 16%, rgba(215, 25, 32, 0.14), transparent 23%),
+          radial-gradient(circle at 92% 20%, rgba(215, 25, 32, 0.18), transparent 25%),
+          radial-gradient(circle at 8% 0%, rgba(255, 255, 255, 0.06), transparent 26%),
           linear-gradient(180deg, rgba(27, 33, 46, 0.98), rgba(13, 18, 28, 0.98));
-        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
       }
 
-      section.main [class*="st-key-page_brand_"] img {
-        display: block;
-        margin-left: auto;
-        margin-top: 0.2rem;
-        max-width: 170px;
-        width: 100%;
-        opacity: 0.96;
+      .page-brand-card::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 310px;
+        height: 100%;
+        background:
+          linear-gradient(90deg, transparent, rgba(215, 25, 32, 0.06)),
+          radial-gradient(circle at 75% 45%, rgba(255, 255, 255, 0.08), transparent 36%);
+        pointer-events: none;
+      }
+
+      .page-brand-content {
+        position: relative;
+        z-index: 2;
       }
 
       .page-brand-eyebrow {
         color: #aeb6c4;
         font-size: 0.74rem;
         font-weight: 900;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.09em;
         text-transform: uppercase;
-        margin-bottom: 0.35rem;
+        margin-bottom: 0.4rem;
       }
 
       .page-brand-title {
         color: #ffffff;
-        font-size: 1.7rem;
-        font-weight: 900;
-        line-height: 1.15;
-        margin-bottom: 0.35rem;
+        font-size: 1.85rem;
+        font-weight: 950;
+        line-height: 1.12;
+        margin-bottom: 0.45rem;
       }
 
       .page-brand-copy {
         color: #b6bcc8;
-        font-size: 0.92rem;
+        font-size: 0.94rem;
         line-height: 1.55;
-        max-width: 780px;
+        max-width: 760px;
+      }
+
+      .page-brand-logo {
+        position: absolute;
+        z-index: 3;
+        top: 50%;
+        right: 1.55rem;
+        transform: translateY(-50%);
+        width: 148px;
+        max-width: 148px;
+        height: auto;
+        opacity: 0.88;
+        object-fit: contain;
+        filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.35));
       }
 
       /* ================================
-         CHAT LIST - FINAL STYLE
+         CHAT LIST
          ================================ */
 
       section[data-testid="stSidebar"] [class*="st-key-chat_item_"] {
@@ -267,16 +308,6 @@ st.markdown(
         box-shadow: none !important;
         transform: none !important;
         color: #ffffff !important;
-      }
-
-      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button::before,
-      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] button::after,
-      section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button::before,
-      section[data-testid="stSidebar"] [class*="st-key-menu_toggle_"] button::after {
-        background: transparent !important;
-        background-color: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
       }
 
       section[data-testid="stSidebar"] [class*="st-key-chat_actions_wrap_"] {
@@ -359,8 +390,19 @@ st.markdown(
           max-width: calc(100vw - 2rem);
         }
 
-        section.main [class*="st-key-page_brand_"] img {
-          max-width: 135px;
+        .page-brand-card {
+          padding: 1.15rem;
+          min-height: auto;
+        }
+
+        .page-brand-logo {
+          position: relative;
+          top: auto;
+          right: auto;
+          transform: none;
+          display: block;
+          width: 120px;
+          margin: 1rem 0 0 auto;
         }
 
         .page-brand-title {
@@ -418,22 +460,23 @@ def title_from_question(question):
 
 
 def render_page_brand(page_key, title, subtitle):
-    with st.container(key=f"page_brand_{page_key}"):
-        left_col, right_col = st.columns([6, 1.6])
+    logo_html = ""
+    if LOGO_DATA_URI:
+        logo_html = f'<img class="page-brand-logo" src="{LOGO_DATA_URI}" alt="Zain Logo">'
 
-        with left_col:
-            st.markdown(
-                f"""
-                <div class="page-brand-eyebrow">Zain Customer 360</div>
-                <div class="page-brand-title">{title}</div>
-                <div class="page-brand-copy">{subtitle}</div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-        with right_col:
-            if LOGO_PATH.exists():
-                st.image(str(LOGO_PATH), width=170)
+    st.markdown(
+        f"""
+        <div class="page-brand-card" id="page-brand-{page_key}">
+          <div class="page-brand-content">
+            <div class="page-brand-eyebrow">Zain Customer 360</div>
+            <div class="page-brand-title">{title}</div>
+            <div class="page-brand-copy">{subtitle}</div>
+          </div>
+          {logo_html}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def init_chat_sessions():
