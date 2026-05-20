@@ -74,14 +74,6 @@ st.markdown(
         box-shadow: 0 0 0 3px rgba(215, 25, 32, 0.15);
         font-weight: 900;
       }
-      .sidebar-caption {
-        border-top: 1px solid #2b303b;
-        margin-top: 1rem;
-        padding-top: 0.9rem;
-        color: #9da3af;
-        font-size: 0.78rem;
-        line-height: 1.45;
-      }
       .block-container {
         padding-top: 1.4rem;
       }
@@ -313,11 +305,6 @@ with st.sidebar:
         if st.button(label, key=f"nav_{page_name}", type="secondary"):
             st.session_state.page = page_name
             st.rerun()
-
-    st.markdown(
-        f'<div class="sidebar-caption">Database: <code>{DB_PATH.name}</code><br>Logo: <code>{LOGO_PATH.name}</code></div>',
-        unsafe_allow_html=True,
-    )
 
 page = st.session_state.page
 
