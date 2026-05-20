@@ -11,22 +11,7 @@ from langchain_community.utilities import SQLDatabase
 
 
 BASE_DIR = Path(__file__).resolve().parent
-
-
-def _resolve_db_path():
-    """Find the Customer 360 SQLite database in common local/deployment names."""
-    candidates = [
-        BASE_DIR / "zain_customer_360_ai_demo.db",
-        BASE_DIR / "zain_customer_360_ai_demo(1).db",
-    ]
-    for candidate in candidates:
-        if candidate.exists():
-            return candidate
-    # Keep the original expected name in error messages for easier deployment debugging.
-    return candidates[0]
-
-
-DB_PATH = _resolve_db_path()
+DB_PATH = BASE_DIR / "zain_customer_360_ai_demo.db"
 MODEL_NAME = "gpt-4.1-mini"
 TOP_K = 5
 
