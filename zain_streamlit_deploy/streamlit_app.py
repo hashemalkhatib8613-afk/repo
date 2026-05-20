@@ -164,65 +164,69 @@ st.markdown(
       }
 
       /* ================================
-         SIDEBAR CHAT ROWS - FINAL STYLE
+         CHAT LIST - FINAL FIX
          ================================ */
 
-      section[data-testid="stSidebar"] div[data-testid="stHorizontalBlock"] {
+      section[data-testid="stSidebar"] [class*="st-key-chat_item_"] {
+        border: 1px solid #2d3340;
+        border-radius: 16px;
+        padding: 0.35rem 0.4rem 0.45rem 0.4rem;
+        margin-bottom: 0.55rem;
+        background: linear-gradient(180deg, rgba(18, 23, 34, 0.96), rgba(10, 14, 22, 0.96));
+      }
+
+      section[data-testid="stSidebar"] [class*="st-key-chat_item_"] div[data-testid="stHorizontalBlock"] {
         align-items: center;
-        gap: 0.35rem;
+        gap: 0.3rem;
       }
 
-      section[data-testid="stSidebar"] div[data-testid="stHorizontalBlock"] div.stButton > button {
-        min-height: 54px;
-        border-radius: 13px;
-        padding: 0.65rem 0.75rem !important;
-        font-size: 0.95rem;
-        line-height: 1.35;
+      section[data-testid="stSidebar"] [class*="st-key-chat_select_wrap_"] div.stButton > button {
+        width: 100% !important;
+        min-height: 52px !important;
+        border-radius: 13px !important;
+        padding: 0.7rem 0.8rem !important;
+        text-align: left !important;
+        justify-content: flex-start !important;
       }
 
-      section[data-testid="stSidebar"] div[data-testid="stPopover"] {
-        width: 42px !important;
-        min-width: 42px !important;
-      }
-
-      section[data-testid="stSidebar"] div[data-testid="stPopover"] > button {
-        width: 38px !important;
-        height: 38px !important;
-        min-height: 38px !important;
+      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] div.stButton > button {
+        width: 34px !important;
+        min-width: 34px !important;
+        height: 34px !important;
+        min-height: 34px !important;
         border-radius: 999px !important;
         padding: 0 !important;
-        margin: 0 !important;
+        margin: 0.1rem 0 0 0 !important;
         background: transparent !important;
-        border: 1px solid transparent !important;
-        color: #cfd4df !important;
-        font-size: 1.35rem !important;
-        font-weight: 900 !important;
-        line-height: 1 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+        border: none !important;
         box-shadow: none !important;
+        color: #d8dde8 !important;
+        font-size: 1.2rem !important;
+        font-weight: 900 !important;
+        text-align: center !important;
+        justify-content: center !important;
+        align-items: center !important;
       }
 
-      section[data-testid="stSidebar"] div[data-testid="stPopover"] > button svg {
-        display: none !important;
-      }
-
-      section[data-testid="stSidebar"] div[data-testid="stPopover"] > button:hover {
+      section[data-testid="stSidebar"] [class*="st-key-chat_menu_wrap_"] div.stButton > button:hover {
         background: rgba(255, 255, 255, 0.08) !important;
-        border-color: #303746 !important;
-        color: #ffffff !important;
+        border: none !important;
         transform: none !important;
+        color: #ffffff !important;
       }
 
-      section[data-testid="stSidebar"] div[data-testid="stPopover"] div.stButton > button {
-        width: 100% !important;
-        min-height: 38px !important;
+      section[data-testid="stSidebar"] [class*="st-key-chat_actions_wrap_"] div.stButton > button {
+        min-height: 36px !important;
         border-radius: 10px !important;
-        padding: 0.45rem 0.7rem !important;
-        justify-content: flex-start !important;
-        text-align: left !important;
-        font-size: 0.85rem !important;
+        padding: 0.45rem 0.65rem !important;
+        font-size: 0.84rem !important;
+        justify-content: center !important;
+        text-align: center !important;
+      }
+
+      section[data-testid="stSidebar"] [class*="st-key-chat_rename_wrap_"] input {
+        min-height: 42px;
+        border-radius: 10px;
       }
 
       /* ================================
@@ -353,6 +357,9 @@ def init_chat_sessions():
     if "rename_chat_value" not in st.session_state:
         st.session_state.rename_chat_value = ""
 
+    if "open_chat_menu_id" not in st.session_state:
+        st.session_state.open_chat_menu_id = None
+
 
 def current_chat():
     init_chat_sessions()
@@ -379,6 +386,9 @@ def create_new_chat():
     st.session_state.chat_sessions.insert(0, chat)
     st.session_state.current_chat_id = next_id
     st.session_state.page = "Chat"
+    st.session_state.open_chat_menu_id = None
+    st.session_state.rename_chat_id = None
+    st.session_state.rename_chat_value = ""
 
 
 def rename_chat(chat_id, new_title):
@@ -394,6 +404,7 @@ def rename_chat(chat_id, new_title):
 
     st.session_state.rename_chat_id = None
     st.session_state.rename_chat_value = ""
+    st.session_state.open_chat_menu_id = None
 
 
 def delete_chat(chat_id):
@@ -417,6 +428,9 @@ def delete_chat(chat_id):
     if st.session_state.rename_chat_id == chat_id:
         st.session_state.rename_chat_id = None
         st.session_state.rename_chat_value = ""
+
+    if st.session_state.open_chat_menu_id == chat_id:
+        st.session_state.open_chat_menu_id = None
 
 
 def render_chart(chart):
@@ -680,52 +694,70 @@ with st.sidebar:
 
     with st.expander("Chats", expanded=True):
         for chat in list(st.session_state.chat_sessions):
-            row_col, menu_col = st.columns([8, 1])
+            with st.container(key=f"chat_item_{chat['id']}"):
+                row_col, menu_col = st.columns([8, 1])
 
-            with row_col:
-                label = "💬 " + chat["title"]
+                with row_col:
+                    with st.container(key=f"chat_select_wrap_{chat['id']}"):
+                        label = "💬 " + chat["title"]
+                        if st.button(label, key=f"select_{chat['id']}", type="secondary"):
+                            st.session_state.current_chat_id = chat["id"]
+                            st.session_state.page = "Chat"
+                            st.session_state.open_chat_menu_id = None
+                            st.rerun()
 
-                if st.button(label, key=f"select_{chat['id']}", type="secondary"):
-                    st.session_state.current_chat_id = chat["id"]
-                    st.session_state.page = "Chat"
-                    st.rerun()
+                with menu_col:
+                    with st.container(key=f"chat_menu_wrap_{chat['id']}"):
+                        if st.button("⋯", key=f"menu_toggle_{chat['id']}", help="Chat options"):
+                            if st.session_state.open_chat_menu_id == chat["id"]:
+                                st.session_state.open_chat_menu_id = None
+                            else:
+                                st.session_state.open_chat_menu_id = chat["id"]
+                            st.rerun()
 
-            with menu_col:
-                with st.popover("⋯", use_container_width=False):
-                    if st.button("Rename", key=f"rename_button_{chat['id']}"):
-                        st.session_state.rename_chat_id = chat["id"]
-                        st.session_state.rename_chat_value = chat["title"]
-                        st.rerun()
+                if st.session_state.open_chat_menu_id == chat["id"]:
+                    with st.container(key=f"chat_actions_wrap_{chat['id']}"):
+                        action_col1, action_col2 = st.columns(2)
 
-                    if st.button("Delete", key=f"delete_button_{chat['id']}"):
-                        delete_chat(chat["id"])
-                        st.rerun()
+                        with action_col1:
+                            if st.button("Rename", key=f"rename_button_{chat['id']}"):
+                                st.session_state.rename_chat_id = chat["id"]
+                                st.session_state.rename_chat_value = chat["title"]
+                                st.session_state.open_chat_menu_id = None
+                                st.rerun()
 
-            if st.session_state.rename_chat_id == chat["id"]:
-                new_title = st.text_input(
-                    "Rename chat",
-                    value=st.session_state.rename_chat_value,
-                    key=f"rename_input_{chat['id']}",
-                    label_visibility="collapsed",
-                    placeholder="Enter new chat name",
-                )
+                        with action_col2:
+                            if st.button("Delete", key=f"delete_button_{chat['id']}"):
+                                delete_chat(chat["id"])
+                                st.rerun()
 
-                save_col, cancel_col = st.columns(2)
+                if st.session_state.rename_chat_id == chat["id"]:
+                    with st.container(key=f"chat_rename_wrap_{chat['id']}"):
+                        new_title = st.text_input(
+                            "Rename chat",
+                            value=st.session_state.rename_chat_value,
+                            key=f"rename_input_{chat['id']}",
+                            label_visibility="collapsed",
+                            placeholder="Enter new chat name",
+                        )
 
-                with save_col:
-                    if st.button("Save", key=f"save_rename_{chat['id']}", type="primary"):
-                        rename_chat(chat["id"], new_title)
-                        st.rerun()
+                        save_col, cancel_col = st.columns(2)
 
-                with cancel_col:
-                    if st.button("Cancel", key=f"cancel_rename_{chat['id']}"):
-                        st.session_state.rename_chat_id = None
-                        st.session_state.rename_chat_value = ""
-                        st.rerun()
+                        with save_col:
+                            if st.button("Save", key=f"save_rename_{chat['id']}", type="primary"):
+                                rename_chat(chat["id"], new_title)
+                                st.rerun()
+
+                        with cancel_col:
+                            if st.button("Cancel", key=f"cancel_rename_{chat['id']}"):
+                                st.session_state.rename_chat_id = None
+                                st.session_state.rename_chat_value = ""
+                                st.rerun()
 
     for page_name, label in NAV_ITEMS:
         if st.button(label, key=f"nav_{page_name}", type="secondary"):
             st.session_state.page = page_name
+            st.session_state.open_chat_menu_id = None
             st.rerun()
 
     st.markdown(
