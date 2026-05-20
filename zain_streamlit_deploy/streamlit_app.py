@@ -44,18 +44,22 @@ st.markdown(
         background: #0b0d12;
         color: #f4f4f5;
       }
+
       section[data-testid="stSidebar"] {
         background: linear-gradient(180deg, #11141b, #0b0d12);
         border-right: 1px solid #2b303b;
       }
+
       section[data-testid="stSidebar"] > div {
         padding: 1.2rem 1rem;
       }
+
       section[data-testid="stSidebar"] img {
         max-width: 190px;
         margin: 0 auto 0.65rem;
         display: block;
       }
+
       .sidebar-hero {
         border: 1px solid #303746;
         border-radius: 16px;
@@ -66,6 +70,7 @@ st.markdown(
           linear-gradient(180deg, rgba(32, 38, 53, 0.98), rgba(17, 20, 27, 0.98));
         box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
       }
+
       .sidebar-hero-title {
         color: #ffffff;
         font-size: 1rem;
@@ -73,17 +78,20 @@ st.markdown(
         line-height: 1.25;
         margin-bottom: 0.35rem;
       }
+
       .sidebar-hero-copy {
         color: #b6bcc8;
         font-size: 0.78rem;
         line-height: 1.45;
       }
+
       .sidebar-chips {
         display: flex;
         flex-wrap: wrap;
         gap: 0.38rem;
         margin-top: 0.75rem;
       }
+
       .sidebar-chip {
         border: 1px solid rgba(255, 255, 255, 0.09);
         border-radius: 999px;
@@ -93,6 +101,7 @@ st.markdown(
         font-size: 0.67rem;
         font-weight: 800;
       }
+
       .sidebar-title {
         color: #8f96a3;
         font-size: 0.74rem;
@@ -101,6 +110,7 @@ st.markdown(
         text-transform: uppercase;
         margin: 0.6rem 0 0.5rem;
       }
+
       .nav-active {
         border: 1px solid rgba(215, 25, 32, 0.62);
         border-radius: 14px;
@@ -111,15 +121,19 @@ st.markdown(
         box-shadow: 0 0 0 3px rgba(215, 25, 32, 0.15);
         font-weight: 900;
       }
+
       .block-container {
         padding-top: 1.4rem;
+        padding-bottom: 7rem;
       }
+
       div[data-testid="stMetric"] {
         background: linear-gradient(180deg, #202635, #171b25);
         border: 1px solid #303746;
         border-radius: 10px;
         padding: 14px;
       }
+
       div.stButton > button {
         width: 100%;
         min-height: 44px;
@@ -132,12 +146,14 @@ st.markdown(
         justify-content: flex-start;
         padding-left: 0.9rem;
       }
+
       div.stButton > button:hover {
         border-color: rgba(215, 25, 32, 0.65);
         color: #ffffff;
         background: linear-gradient(180deg, #2d3548, #1d2330);
         transform: translateY(-1px);
       }
+
       .sidebar-footnote {
         margin-top: 1rem;
         border-top: 1px solid #2b303b;
@@ -146,51 +162,85 @@ st.markdown(
         font-size: 0.72rem;
         line-height: 1.45;
       }
- .st-key-fixed_chat_bar {
-  position: fixed;
-  left: 23rem;
-  right: 2rem;
-  bottom: 0.9rem;
-  z-index: 1001;
-  max-width: calc(100vw - 25rem);
-  border: 1px solid #303746;
-  border-radius: 16px;
-  padding: 0.75rem;
-  background: rgba(17, 20, 27, 0.98);
-  box-shadow: 0 -18px 42px rgba(0, 0, 0, 0.28);
-}
 
-.st-key-fixed_chat_bar [data-testid="stForm"] {
-  border: 0;
-  padding: 0;
-  background: transparent;
-}
+      /* Sidebar chat rows */
+      section[data-testid="stSidebar"] div[data-testid="stHorizontalBlock"] {
+        align-items: center;
+      }
 
-.st-key-fixed_chat_bar div[data-testid="stHorizontalBlock"] {
-  align-items: end;
-  gap: 0.75rem;
-}
+      section[data-testid="stSidebar"] div[data-testid="stPopover"] button {
+        width: 100% !important;
+        min-height: 44px !important;
+        border-radius: 12px !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        justify-content: center !important;
+        text-align: center !important;
+      }
 
-.st-key-fixed_chat_bar input {
-  width: 100% !important;
-  min-height: 48px;
-  border-radius: 12px;
-}
+      section[data-testid="stSidebar"] div[data-testid="stPopover"] {
+        width: 100%;
+      }
 
-.st-key-fixed_chat_bar button {
-  min-height: 48px !important;
-  justify-content: center !important;
-  border-radius: 12px !important;
-  white-space: nowrap;
-}
+      /* Fixed chat input bar */
+      .st-key-fixed_chat_bar {
+        position: fixed;
+        left: 23rem;
+        right: 2rem;
+        bottom: 0.9rem;
+        z-index: 1001;
+        max-width: calc(100vw - 25rem);
+        border: 1px solid #303746;
+        border-radius: 16px;
+        padding: 0.75rem;
+        background: rgba(17, 20, 27, 0.98);
+        box-shadow: 0 -18px 42px rgba(0, 0, 0, 0.28);
+      }
 
-@media (max-width: 900px) {
-  .st-key-fixed_chat_bar {
-    left: 1rem;
-    right: 1rem;
-    max-width: calc(100vw - 2rem);
-  }
-}
+      .st-key-fixed_chat_bar [data-testid="stForm"] {
+        border: 0;
+        padding: 0;
+        background: transparent;
+      }
+
+      .st-key-fixed_chat_bar div[data-testid="stHorizontalBlock"] {
+        align-items: end;
+        gap: 0.75rem;
+      }
+
+      .st-key-fixed_chat_bar div[data-testid="column"] {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+
+      .st-key-fixed_chat_bar input {
+        width: 100% !important;
+        min-height: 48px;
+        border-radius: 12px;
+      }
+
+      .st-key-fixed_chat_bar button {
+        min-height: 48px !important;
+        justify-content: center !important;
+        align-items: center !important;
+        border-radius: 12px !important;
+        white-space: nowrap;
+        text-align: center !important;
+        padding-left: 0.8rem !important;
+        padding-right: 0.8rem !important;
+      }
+
+      @media (max-width: 900px) {
+        .st-key-fixed_chat_bar {
+          left: 1rem;
+          right: 1rem;
+          max-width: calc(100vw - 2rem);
+        }
+      }
+
+      div[data-testid="stAlert"] {
+        border-radius: 10px;
+      }
     </style>
     """,
     unsafe_allow_html=True,
@@ -247,34 +297,85 @@ def init_chat_sessions():
             }
         ]
         st.session_state.current_chat_id = "chat_1"
+
     if "current_chat_id" not in st.session_state:
         st.session_state.current_chat_id = st.session_state.chat_sessions[0]["id"]
+
+    if "rename_chat_id" not in st.session_state:
+        st.session_state.rename_chat_id = None
+
+    if "rename_chat_value" not in st.session_state:
+        st.session_state.rename_chat_value = ""
 
 
 def current_chat():
     init_chat_sessions()
+
     for chat in st.session_state.chat_sessions:
         if chat["id"] == st.session_state.current_chat_id:
             return chat
+
     st.session_state.current_chat_id = st.session_state.chat_sessions[0]["id"]
     return st.session_state.chat_sessions[0]
 
 
 def create_new_chat():
     init_chat_sessions()
+
     next_id = f"chat_{len(st.session_state.chat_sessions) + 1}_{int(time.time())}"
+
     chat = {
         "id": next_id,
         "title": "New Chat",
         "messages": [default_assistant_message()],
     }
+
     st.session_state.chat_sessions.insert(0, chat)
     st.session_state.current_chat_id = next_id
     st.session_state.page = "Chat"
 
 
+def rename_chat(chat_id, new_title):
+    new_title = " ".join(new_title.split()).strip()
+
+    if not new_title:
+        return
+
+    for chat in st.session_state.chat_sessions:
+        if chat["id"] == chat_id:
+            chat["title"] = new_title
+            break
+
+    st.session_state.rename_chat_id = None
+    st.session_state.rename_chat_value = ""
+
+
+def delete_chat(chat_id):
+    st.session_state.chat_sessions = [
+        chat for chat in st.session_state.chat_sessions if chat["id"] != chat_id
+    ]
+
+    if not st.session_state.chat_sessions:
+        st.session_state.chat_sessions = [
+            {
+                "id": f"chat_1_{int(time.time())}",
+                "title": "New Chat",
+                "messages": [default_assistant_message()],
+            }
+        ]
+
+    if st.session_state.current_chat_id == chat_id:
+        st.session_state.current_chat_id = st.session_state.chat_sessions[0]["id"]
+        st.session_state.page = "Chat"
+
+    if st.session_state.rename_chat_id == chat_id:
+        st.session_state.rename_chat_id = None
+        st.session_state.rename_chat_value = ""
+
+
 def render_chart(chart):
     rows = chart.get("rows") or []
+
     if not rows:
         st.warning(chart.get("summary") or "No matching data was found for this chart request.")
         return
@@ -282,6 +383,7 @@ def render_chart(chart):
     df = pd.DataFrame(rows)
     title = chart.get("title", "Chart")
     chart_type = chart.get("chart_type", "bar")
+
     st.subheader(title)
 
     if chart_type == "pie":
@@ -299,6 +401,7 @@ def render_chart(chart):
 
     if chart.get("summary"):
         st.caption(chart["summary"])
+
     with st.expander("Chart data"):
         st.dataframe(df, width="stretch", hide_index=True)
 
@@ -306,6 +409,7 @@ def render_chart(chart):
 def stream_markdown(text):
     placeholder = st.empty()
     rendered = ""
+
     for token in text.split(" "):
         rendered += token + " "
         placeholder.markdown(rendered)
@@ -314,6 +418,7 @@ def stream_markdown(text):
 
 def run_sql_callback(key_prefix):
     sql = st.session_state.get(f"{key_prefix}_sql_editor", "").strip()
+
     try:
         st.session_state[f"{key_prefix}_sql_result"] = execute_sql_query(sql)
         st.session_state[f"{key_prefix}_sql_error"] = ""
@@ -324,11 +429,14 @@ def run_sql_callback(key_prefix):
 
 def render_sql_runner(default_sql="", key_prefix="sql_runner"):
     st.markdown("#### SQL Query Builder")
+
     editor_key = f"{key_prefix}_sql_editor"
+
     if editor_key not in st.session_state:
         st.session_state[editor_key] = default_sql
 
     st.text_area("SQL", height=180, key=editor_key)
+
     st.button(
         "Run Query",
         type="primary",
@@ -339,11 +447,13 @@ def render_sql_runner(default_sql="", key_prefix="sql_runner"):
 
     error = st.session_state.get(f"{key_prefix}_sql_error", "")
     result = st.session_state.get(f"{key_prefix}_sql_result")
+
     if error:
         st.error(f"Query failed: {error}")
     elif result:
         rows = result.get("rows", [])
         st.success(f"Returned {len(rows)} rows.")
+
         if rows:
             st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True)
         else:
@@ -352,14 +462,18 @@ def render_sql_runner(default_sql="", key_prefix="sql_runner"):
 
 def show_overview():
     st.title("Database Overview")
+
     data = get_database_overview()
+
     st.caption(data["summary"])
 
     cols = st.columns(len(data["kpis"]))
+
     for col, item in zip(cols, data["kpis"]):
         col.metric(item["label"], f"{item['value']:,}")
 
     chart_cols = st.columns(2)
+
     for index, chart in enumerate(data["charts"]):
         with chart_cols[index % 2]:
             render_chart(chart)
@@ -371,15 +485,19 @@ def show_overview():
 def show_chart_builder():
     st.title("Chart Builder")
     st.caption("Ask for one chart in business language. The app queries the database and builds only that chart.")
+
     question = st.text_area(
         "Chart inquiry",
         value="Build a chart based on customer with ID = 9 by their complaints type and number.",
         height=110,
     )
+
     chart_label = st.selectbox("Chart type", list(CHART_TYPES.keys()))
+
     if st.button("Create Chart", type="primary"):
         with st.spinner("Building chart from database..."):
             chart = build_chart_from_question(question, CHART_TYPES[chart_label])
+
         st.session_state.last_chart = chart
 
     if st.session_state.get("last_chart"):
@@ -388,62 +506,90 @@ def show_chart_builder():
 
 def show_chat():
     chat = current_chat()
+
     st.title("Customer 360 Chat")
     st.caption(f"{chat['title']} · Ask about customers, churn, billing, complaints, campaigns, and network events.")
 
     for index, message in enumerate(chat["messages"]):
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
+
             if message.get("sql"):
                 with st.expander("SQL Query"):
                     render_sql_runner(message["sql"], key_prefix=f"{chat['id']}_history_{index}")
 
     chat_bar = st.container(key="fixed_chat_bar")
+
     with chat_bar:
         with st.form("fixed_chat_form", clear_on_submit=True):
             input_col, send_col = st.columns([8, 1.4])
+
             with input_col:
                 prompt = st.text_input(
                     "Question",
                     placeholder="Ask a question about the Customer 360 database",
                     label_visibility="collapsed",
                 )
+
             with send_col:
                 submitted = st.form_submit_button("Send", type="primary", width="stretch")
+
     if submitted and prompt.strip():
         prompt = prompt.strip()
+
         if chat["title"] == "New Chat":
             chat["title"] = title_from_question(prompt)
+
         chat["messages"].append({"role": "user", "content": prompt})
+
         with st.chat_message("user"):
             st.markdown(prompt)
+
         with st.chat_message("assistant"):
             with st.spinner("Asking the SQL agent..."):
                 payload = ask_sql_agent_payload(prompt)
+
             stream_markdown(payload["answer"])
+
             if payload.get("sql"):
                 with st.expander("SQL Query"):
                     render_sql_runner(payload["sql"], key_prefix=f"{chat['id']}_current_{len(chat['messages'])}")
+
         chat["messages"].append(
-            {"role": "assistant", "content": payload["answer"], "sql": payload.get("sql", "")}
+            {
+                "role": "assistant",
+                "content": payload["answer"],
+                "sql": payload.get("sql", ""),
+            }
         )
 
 
 def show_suggested_questions():
     chat = current_chat()
+
     st.title("Suggested Questions")
     st.caption("Use these predictable customer inputs to guide useful database-backed questions.")
+
     for question in SUGGESTED_QUESTIONS:
         if st.button(question):
             if chat["title"] == "New Chat":
                 chat["title"] = title_from_question(question)
+
             chat["messages"].append({"role": "user", "content": question})
+
             with st.spinner("Asking the SQL agent..."):
                 payload = ask_sql_agent_payload(question)
+
             chat["messages"].append(
-                {"role": "assistant", "content": payload["answer"], "sql": payload.get("sql", "")}
+                {
+                    "role": "assistant",
+                    "content": payload["answer"],
+                    "sql": payload.get("sql", ""),
+                }
             )
+
             st.success("Question sent to Chat. Open the Chat page to view the answer.")
+
             st.session_state.page = "Chat"
             time.sleep(0.8)
             st.rerun()
@@ -474,9 +620,11 @@ with st.sidebar:
 
     if "page" not in st.session_state:
         st.session_state.page = "Chat"
+
     init_chat_sessions()
 
     active_label = current_chat()["title"] if st.session_state.page == "Chat" else dict(NAV_ITEMS)[st.session_state.page]
+
     st.markdown('<div class="sidebar-title">Navigation</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="nav-active">{active_label}</div>', unsafe_allow_html=True)
 
@@ -485,12 +633,49 @@ with st.sidebar:
         st.rerun()
 
     with st.expander("Chats", expanded=True):
-        for chat in st.session_state.chat_sessions:
-            label = "💬 " + chat["title"]
-            if st.button(label, key=f"select_{chat['id']}", type="secondary"):
-                st.session_state.current_chat_id = chat["id"]
-                st.session_state.page = "Chat"
-                st.rerun()
+        for chat in list(st.session_state.chat_sessions):
+            row_col, menu_col = st.columns([5, 1])
+
+            with row_col:
+                label = "💬 " + chat["title"]
+
+                if st.button(label, key=f"select_{chat['id']}", type="secondary"):
+                    st.session_state.current_chat_id = chat["id"]
+                    st.session_state.page = "Chat"
+                    st.rerun()
+
+            with menu_col:
+                with st.popover("⋯", use_container_width=True):
+                    if st.button("Rename", key=f"rename_button_{chat['id']}"):
+                        st.session_state.rename_chat_id = chat["id"]
+                        st.session_state.rename_chat_value = chat["title"]
+                        st.rerun()
+
+                    if st.button("Delete", key=f"delete_button_{chat['id']}"):
+                        delete_chat(chat["id"])
+                        st.rerun()
+
+            if st.session_state.rename_chat_id == chat["id"]:
+                new_title = st.text_input(
+                    "Rename chat",
+                    value=st.session_state.rename_chat_value,
+                    key=f"rename_input_{chat['id']}",
+                    label_visibility="collapsed",
+                    placeholder="Enter new chat name",
+                )
+
+                save_col, cancel_col = st.columns(2)
+
+                with save_col:
+                    if st.button("Save", key=f"save_rename_{chat['id']}", type="primary"):
+                        rename_chat(chat["id"], new_title)
+                        st.rerun()
+
+                with cancel_col:
+                    if st.button("Cancel", key=f"cancel_rename_{chat['id']}"):
+                        st.session_state.rename_chat_id = None
+                        st.session_state.rename_chat_value = ""
+                        st.rerun()
 
     for page_name, label in NAV_ITEMS:
         if st.button(label, key=f"nav_{page_name}", type="secondary"):
@@ -505,6 +690,7 @@ with st.sidebar:
         """,
         unsafe_allow_html=True,
     )
+
 
 page = st.session_state.page
 
