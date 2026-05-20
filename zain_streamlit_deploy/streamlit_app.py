@@ -247,6 +247,13 @@ def show_chat():
             {"role": "assistant", "content": "Hello. Ask me a business question about the Zain Customer 360 database."}
         ]
 
+    if st.button("Clear Chat", key="clear_chat_button"):
+        st.session_state.messages = [
+            {"role": "assistant", "content": "Hello. Ask me a business question about the Zain Customer 360 database."}
+        ]
+        st.success("Chat cleared.")
+        st.rerun()
+
     for index, message in enumerate(st.session_state.messages):
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
@@ -284,6 +291,9 @@ def show_suggested_questions():
                 {"role": "assistant", "content": payload["answer"], "sql": payload.get("sql", "")}
             )
             st.success("Question sent to Chat. Open the Chat page to view the answer.")
+            st.session_state.page = "Chat"
+            time.sleep(0.8)
+            st.rerun()
 
 
 with st.sidebar:
