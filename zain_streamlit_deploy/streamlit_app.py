@@ -3,8 +3,9 @@ import html
 import os
 import sqlite3
 import time
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 import pandas as pd
 import plotly.express as px
@@ -13,28 +14,16 @@ import streamlit as st
 
 APP_DIR = Path(__file__).resolve().parent
 LOGO_PATH = APP_DIR / "zain-logo.png"
-
-DB_CANDIDATES = [
-    APP_DIR / "zain_customer_360_ai_demo.db",
-    APP_DIR / "zain_customer_360_ai_demo(1).db",
-]
-
-
-def resolve_db_path() -> Path:
-    for candidate in DB_CANDIDATES:
-        if candidate.exists():
-            return candidate
-    return DB_CANDIDATES[0]
-
-
-DB_PATH = resolve_db_path()
+DB_PATH = APP_DIR / "zain_customer_360_ai_demo.db"
 
 
 def load_streamlit_secret() -> None:
+    """Load OpenAI key from Streamlit secrets when deployed on Streamlit Cloud."""
     try:
         key = st.secrets.get("OPENAI_API_KEY")
     except Exception:
         key = None
+
     if key:
         os.environ["OPENAI_API_KEY"] = str(key)
 
@@ -45,381 +34,916 @@ from class3_sql_agent_backend import (  # noqa: E402
     ask_sql_agent_payload,
     build_chart_from_question,
     execute_sql_query,
+    get_database_overview,
 )
 
 st.set_page_config(
     page_title="Zain 360 Copilot",
-    page_icon=str(LOGO_PATH) if LOGO_PATH.exists() else "💬",
+    page_icon=str(LOGO_PATH) if LOGO_PATH.exists() else "✨",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# -----------------------------------------------------------------------------
-# Data access
-# -----------------------------------------------------------------------------
+
+# ============================================================
+# Theme and UI helpers
+# ============================================================
+
+THEME_TOKENS: Dict[str, Dict[str, str]] = {
+    "Light": {
+        "app_bg": "#EEF3FB",
+        "app_bg_2": "#F8FAFF",
+        "sidebar_bg": "rgba(255, 255, 255, 0.76)",
+        "surface": "rgba(255, 255, 255, 0.86)",
+        "surface_2": "rgba(247, 249, 255, 0.88)",
+        "surface_3": "#FFFFFF",
+        "text": "#101828",
+        "text_soft": "#344054",
+        "muted": "#667085",
+        "faint": "#98A2B3",
+        "border": "rgba(16, 24, 40, 0.10)",
+        "border_strong": "rgba(99, 91, 255, 0.28)",
+        "accent": "#635BFF",
+        "accent_2": "#7C3AED",
+        "accent_3": "#06B6D4",
+        "success": "#16A34A",
+        "warning": "#F59E0B",
+        "danger": "#DC2626",
+        "shadow": "0 24px 70px rgba(31, 41, 55, 0.13)",
+        "shadow_soft": "0 14px 38px rgba(31, 41, 55, 0.10)",
+        "plot_template": "plotly_white",
+        "plot_bg": "rgba(0,0,0,0)",
+        "paper_bg": "rgba(0,0,0,0)",
+    },
+    "Dark": {
+        "app_bg": "#060916",
+        "app_bg_2": "#0B1022",
+        "sidebar_bg": "rgba(9, 13, 31, 0.82)",
+        "surface": "rgba(15, 23, 42, 0.82)",
+        "surface_2": "rgba(20, 30, 55, 0.74)",
+        "surface_3": "#121A31",
+        "text": "#F8FAFC",
+        "text_soft": "#D9E3F0",
+        "muted": "#A7B3C5",
+        "faint": "#64748B",
+        "border": "rgba(255, 255, 255, 0.12)",
+        "border_strong": "rgba(167, 139, 250, 0.42)",
+        "accent": "#7C3AED",
+        "accent_2": "#A855F7",
+        "accent_3": "#38BDF8",
+        "success": "#22C55E",
+        "warning": "#FBBF24",
+        "danger": "#F87171",
+        "shadow": "0 28px 80px rgba(0, 0, 0, 0.46)",
+        "shadow_soft": "0 18px 48px rgba(0, 0, 0, 0.32)",
+        "plot_template": "plotly_dark",
+        "plot_bg": "rgba(0,0,0,0)",
+        "paper_bg": "rgba(0,0,0,0)",
+    },
+}
+
+
+def get_theme_name() -> str:
+    if "appearance" not in st.session_state:
+        st.session_state.appearance = "Light"
+    return st.session_state.appearance
+
+
+def theme() -> Dict[str, str]:
+    return THEME_TOKENS[get_theme_name()]
+
+
+def esc(value: Any) -> str:
+    return html.escape(str(value), quote=True)
+
+
+def logo_data_uri() -> str:
+    if not LOGO_PATH.exists():
+        return ""
+    image_bytes = LOGO_PATH.read_bytes()
+    encoded = base64.b64encode(image_bytes).decode("utf-8")
+    return f"data:image/png;base64,{encoded}"
+
+
+LOGO_DATA_URI = logo_data_uri()
+
+
+def inject_css() -> None:
+    t = theme()
+    st.markdown(
+        f"""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+:root {{
+  --app-bg: {t['app_bg']};
+  --app-bg-2: {t['app_bg_2']};
+  --sidebar-bg: {t['sidebar_bg']};
+  --surface: {t['surface']};
+  --surface-2: {t['surface_2']};
+  --surface-3: {t['surface_3']};
+  --text: {t['text']};
+  --text-soft: {t['text_soft']};
+  --muted: {t['muted']};
+  --faint: {t['faint']};
+  --border: {t['border']};
+  --border-strong: {t['border_strong']};
+  --accent: {t['accent']};
+  --accent-2: {t['accent_2']};
+  --accent-3: {t['accent_3']};
+  --success: {t['success']};
+  --warning: {t['warning']};
+  --danger: {t['danger']};
+  --shadow: {t['shadow']};
+  --shadow-soft: {t['shadow_soft']};
+  --radius-xl: 30px;
+  --radius-lg: 22px;
+  --radius-md: 16px;
+}}
+
+html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stAppViewContainer"] > .main {{
+  background:
+    radial-gradient(circle at 12% 2%, color-mix(in srgb, var(--accent-3) 12%, transparent), transparent 30%),
+    radial-gradient(circle at 94% 8%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 29%),
+    linear-gradient(135deg, var(--app-bg), var(--app-bg-2) 48%, var(--app-bg));
+  color: var(--text) !important;
+  font-family: "Inter", sans-serif !important;
+}}
+
+* {{
+  font-family: "Inter", sans-serif !important;
+}}
+
+header[data-testid="stHeader"] {{
+  background: transparent !important;
+}}
+
+[data-testid="stToolbar"] {{
+  color: var(--text) !important;
+}}
+
+.block-container {{
+  max-width: 1280px !important;
+  padding-top: 1.15rem !important;
+  padding-bottom: 6.5rem !important;
+  padding-left: 2rem !important;
+  padding-right: 2rem !important;
+}}
+
+h1, h2, h3, h4, h5, h6 {{
+  color: var(--text) !important;
+  letter-spacing: -0.035em !important;
+}}
+
+p, li, label, span, div {{
+  color: inherit;
+}}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {{
+  width: 340px !important;
+  min-width: 340px !important;
+  background: transparent !important;
+  border-right: 0 !important;
+}}
+
+section[data-testid="stSidebar"] > div {{
+  padding: 1rem 0.8rem !important;
+  background: transparent !important;
+}}
+
+section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {{
+  min-height: calc(100vh - 2rem) !important;
+  padding: 1rem !important;
+  border-radius: 34px !important;
+  background:
+    radial-gradient(circle at 82% 0%, color-mix(in srgb, var(--accent) 24%, transparent), transparent 34%),
+    var(--sidebar-bg) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow) !important;
+  backdrop-filter: blur(24px) saturate(1.4) !important;
+}}
+
+.sidebar-brand-card {{
+  position: relative;
+  overflow: hidden;
+  border-radius: 28px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background:
+    radial-gradient(circle at 85% 12%, color-mix(in srgb, var(--accent-2) 34%, transparent), transparent 36%),
+    linear-gradient(135deg, color-mix(in srgb, var(--surface-3) 88%, transparent), color-mix(in srgb, var(--surface-2) 72%, transparent));
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-soft);
+}}
+
+.sidebar-brand-row {{
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.78rem;
+}}
+
+.brand-mark {{
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
+  color: #fff;
+  font-weight: 900;
+  font-size: 0.88rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 16px 34px color-mix(in srgb, var(--accent) 34%, transparent);
+}}
+
+.brand-title {{
+  font-size: 1.02rem;
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  color: var(--text);
+}}
+
+.brand-subtitle {{
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--muted);
+  margin-top: 0.14rem;
+}}
+
+.brand-copy {{
+  position: relative;
+  z-index: 2;
+  margin-top: 0.82rem;
+  color: var(--text-soft);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}}
+
+.sidebar-label {{
+  margin: 1.05rem 0 0.45rem 0.2rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+}}
+
+.sidebar-divider {{
+  height: 1px;
+  margin: 1rem 0;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+}}
+
+.status-pill {{
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.8rem;
+  padding: 0.42rem 0.62rem;
+  border-radius: 999px;
+  color: var(--text-soft);
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: color-mix(in srgb, var(--surface-3) 68%, transparent);
+  border: 1px solid var(--border);
+}}
+
+.status-dot {{
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+  background: var(--success);
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--success) 15%, transparent);
+}}
+
+.sidebar-footnote {{
+  margin-top: 1rem;
+  padding: 0.85rem;
+  border-radius: 20px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.48;
+  background: color-mix(in srgb, var(--surface-3) 55%, transparent);
+  border: 1px solid var(--border);
+}}
+
+/* Buttons */
+section[data-testid="stSidebar"] div.stButton > button {{
+  width: 100% !important;
+  min-height: 42px !important;
+  border-radius: 16px !important;
+  border: 1px solid transparent !important;
+  color: var(--text-soft) !important;
+  background: transparent !important;
+  font-size: 0.84rem !important;
+  font-weight: 800 !important;
+  text-align: left !important;
+  justify-content: flex-start !important;
+  padding: 0.55rem 0.72rem !important;
+  box-shadow: none !important;
+  transition: 150ms ease !important;
+}}
+
+section[data-testid="stSidebar"] div.stButton > button:hover {{
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+  background: color-mix(in srgb, var(--surface-3) 68%, transparent) !important;
+}}
+
+section[data-testid="stSidebar"] div.stButton > button[kind="primary"] {{
+  color: #fff !important;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2)) !important;
+  border-color: color-mix(in srgb, var(--accent) 34%, transparent) !important;
+  box-shadow: 0 14px 34px color-mix(in srgb, var(--accent) 30%, transparent) !important;
+}}
+
+.main div.stButton > button, .stDownloadButton > button {{
+  min-height: 42px !important;
+  border-radius: 15px !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+  background: color-mix(in srgb, var(--surface-3) 70%, transparent) !important;
+  font-weight: 800 !important;
+  box-shadow: var(--shadow-soft) !important;
+  transition: 150ms ease !important;
+}}
+
+.main div.stButton > button:hover, .stDownloadButton > button:hover {{
+  transform: translateY(-1px);
+  border-color: var(--border-strong) !important;
+}}
+
+.main div.stButton > button[kind="primary"] {{
+  color: #fff !important;
+  border-color: color-mix(in srgb, var(--accent) 42%, transparent) !important;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2)) !important;
+  box-shadow: 0 18px 38px color-mix(in srgb, var(--accent) 28%, transparent) !important;
+}}
+
+/* Inputs */
+input, textarea, [data-baseweb="select"] > div, [data-baseweb="tag"] {{
+  border-radius: 15px !important;
+}}
+
+input, textarea {{
+  color: var(--text) !important;
+  background: color-mix(in srgb, var(--surface-3) 72%, transparent) !important;
+  border-color: var(--border) !important;
+}}
+
+textarea:focus, input:focus {{
+  border-color: var(--border-strong) !important;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 12%, transparent) !important;
+}}
+
+/* Cards */
+.hero-card {{
+  position: relative;
+  overflow: hidden;
+  border-radius: 34px;
+  padding: 1.45rem;
+  margin-bottom: 1.25rem;
+  background:
+    radial-gradient(circle at 86% 26%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 30%),
+    radial-gradient(circle at 100% 4%, color-mix(in srgb, var(--accent-3) 14%, transparent), transparent 27%),
+    linear-gradient(135deg, color-mix(in srgb, var(--surface-3) 86%, transparent), color-mix(in srgb, var(--surface-2) 74%, transparent));
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(20px) saturate(1.3);
+}}
+
+.hero-eyebrow {{
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  margin-bottom: 0.42rem;
+}}
+
+.hero-title {{
+  color: var(--text);
+  font-size: clamp(1.65rem, 4vw, 2.65rem);
+  line-height: 1.02;
+  font-weight: 900;
+  letter-spacing: -0.06em;
+  max-width: 850px;
+}}
+
+.hero-copy {{
+  color: var(--text-soft);
+  font-size: 0.96rem;
+  line-height: 1.62;
+  max-width: 850px;
+  margin-top: 0.66rem;
+}}
+
+.hero-logo {{
+  position: absolute;
+  right: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 148px;
+  max-width: 24%;
+  opacity: 0.14;
+  filter: grayscale(1);
+}}
+
+.stat-card, .insight-card, .mini-card {{
+  height: 100%;
+  border-radius: 24px;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--surface-3) 72%, transparent);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(18px);
+}}
+
+.stat-label {{
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}}
+
+.stat-value {{
+  color: var(--text);
+  font-size: 1.72rem;
+  font-weight: 950;
+  letter-spacing: -0.05em;
+  margin-top: 0.38rem;
+}}
+
+.stat-help {{
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  margin-top: 0.35rem;
+}}
+
+.insight-card strong {{ color: var(--text); }}
+.insight-card {{ color: var(--text-soft); font-size: 0.86rem; line-height: 1.55; }}
+
+.section-title {{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1.15rem 0 0.65rem;
+}}
+
+.section-title h3 {{
+  margin: 0;
+  font-size: 1.08rem;
+  font-weight: 900;
+}}
+
+.section-title p {{
+  margin: 0.16rem 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+}}
+
+.soft-caption {{
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}}
+
+.chip-row {{
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0.75rem 0 0.5rem;
+}}
+
+.fake-chip {{
+  border-radius: 999px;
+  padding: 0.42rem 0.72rem;
+  font-size: 0.76rem;
+  font-weight: 850;
+  color: var(--text-soft);
+  background: color-mix(in srgb, var(--surface-3) 68%, transparent);
+  border: 1px solid var(--border);
+}}
+
+/* Native components */
+div[data-testid="stMetric"] {{
+  border-radius: 24px !important;
+  background: color-mix(in srgb, var(--surface-3) 72%, transparent) !important;
+  border: 1px solid var(--border) !important;
+  padding: 1rem !important;
+  box-shadow: var(--shadow-soft) !important;
+}}
+
+div[data-testid="stMetric"] label, div[data-testid="stMetricDelta"] {{
+  color: var(--muted) !important;
+}}
+
+div[data-testid="stMetricValue"] {{
+  color: var(--text) !important;
+  font-weight: 900 !important;
+}}
+
+.stPlotlyChart, div[data-testid="stDataFrame"], div[data-testid="stExpander"], div[data-testid="stCodeBlock"] {{
+  border-radius: 24px !important;
+  overflow: hidden !important;
+  border: 1px solid var(--border) !important;
+  background: color-mix(in srgb, var(--surface-3) 72%, transparent) !important;
+  box-shadow: var(--shadow-soft) !important;
+}}
+
+div[data-testid="stExpander"] summary {{
+  font-weight: 850 !important;
+  color: var(--text) !important;
+}}
+
+div[data-testid="stTabs"] button {{
+  font-weight: 850 !important;
+}}
+
+/* Chat */
+div[data-testid="stChatMessage"] {{
+  padding: 0.6rem 0 !important;
+  background: transparent !important;
+}}
+
+div[data-testid="stChatMessageContent"] {{
+  color: var(--text-soft) !important;
+  line-height: 1.65 !important;
+  font-size: 0.95rem !important;
+}}
+
+div[data-testid="stChatInput"] {{
+  border-radius: 26px !important;
+}}
+
+[data-testid="stBottomBlockContainer"] {{
+  background: linear-gradient(180deg, transparent, var(--app-bg) 36%) !important;
+}}
+
+/* Scrollbar */
+::-webkit-scrollbar {{ width: 10px; height: 10px; }}
+::-webkit-scrollbar-track {{ background: transparent; }}
+::-webkit-scrollbar-thumb {{ background: color-mix(in srgb, var(--muted) 36%, transparent); border-radius: 999px; }}
+::-webkit-scrollbar-thumb:hover {{ background: color-mix(in srgb, var(--muted) 52%, transparent); }}
+
+@media (max-width: 980px) {{
+  section[data-testid="stSidebar"] {{ width: auto !important; min-width: auto !important; }}
+  .block-container {{ padding-left: 1rem !important; padding-right: 1rem !important; }}
+  .hero-card {{ padding: 1.15rem; border-radius: 26px; }}
+  .hero-logo {{ display: none; }}
+}}
+</style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_hero(title: str, subtitle: str, eyebrow: str = "ZAIN 360 COPILOT") -> None:
+    logo = f'<img class="hero-logo" src="{LOGO_DATA_URI}" alt="Zain logo">' if LOGO_DATA_URI else ""
+    st.markdown(
+        f"""
+        <div class="hero-card">
+          <div class="hero-eyebrow">{esc(eyebrow)}</div>
+          <div class="hero-title">{esc(title)}</div>
+          <div class="hero-copy">{esc(subtitle)}</div>
+          {logo}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def stat_card(label: str, value: Any, help_text: str = "") -> None:
+    st.markdown(
+        f"""
+        <div class="stat-card">
+          <div class="stat-label">{esc(label)}</div>
+          <div class="stat-value">{esc(value)}</div>
+          <div class="stat-help">{esc(help_text)}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def section_title(title: str, subtitle: str = "") -> None:
+    st.markdown(
+        f"""
+        <div class="section-title">
+          <div>
+            <h3>{esc(title)}</h3>
+            <p>{esc(subtitle)}</p>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def insight_card(title: str, body: str) -> None:
+    st.markdown(
+        f"""
+        <div class="insight-card">
+          <strong>{esc(title)}</strong><br>
+          {esc(body)}
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def format_number(value: float, suffix: str = "") -> str:
+    if pd.isna(value):
+        return "—"
+    value = float(value)
+    if abs(value) >= 1_000_000:
+        return f"{value / 1_000_000:.2f}M{suffix}"
+    if abs(value) >= 1_000:
+        return f"{value / 1_000:.1f}K{suffix}"
+    if value.is_integer():
+        return f"{int(value):,}{suffix}"
+    return f"{value:,.2f}{suffix}"
+
+
+def apply_plot_style(fig: go.Figure, height: int = 410) -> go.Figure:
+    t = theme()
+    fig.update_layout(
+        template=t["plot_template"],
+        height=height,
+        paper_bgcolor=t["paper_bg"],
+        plot_bgcolor=t["plot_bg"],
+        margin=dict(l=18, r=18, t=58, b=18),
+        font=dict(family="Inter", color=t["text_soft"]),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+    )
+    fig.update_xaxes(showgrid=True, gridcolor="rgba(148,163,184,0.16)", zeroline=False)
+    fig.update_yaxes(showgrid=True, gridcolor="rgba(148,163,184,0.16)", zeroline=False)
+    return fig
+
+
+def render_plot(fig: go.Figure, height: int = 410) -> None:
+    st.plotly_chart(apply_plot_style(fig, height), use_container_width=True)
+
+
+# ============================================================
+# Database helpers
+# ============================================================
 
 
 def connect_db() -> sqlite3.Connection:
     if not DB_PATH.exists():
-        raise FileNotFoundError(
-            f"Database file was not found. Expected one of: {', '.join(str(p.name) for p in DB_CANDIDATES)}"
-        )
+        raise FileNotFoundError(f"Database not found: {DB_PATH}")
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
 
-@st.cache_data(show_spinner=False)
-def query_df(sql: str, params: tuple = ()) -> pd.DataFrame:
+@st.cache_data(ttl=300, show_spinner=False)
+def query_df(sql: str, params: Tuple[Any, ...] = ()) -> pd.DataFrame:
     with connect_db() as conn:
         return pd.read_sql_query(sql, conn, params=params)
 
 
-@st.cache_data(show_spinner=False)
-def scalar(sql: str, params: tuple = ()):  # noqa: ANN001
-    with connect_db() as conn:
-        row = conn.execute(sql, params).fetchone()
-    if row is None:
-        return None
-    return list(dict(row).values())[0]
-
-
-@st.cache_data(show_spinner=False)
-def get_table_counts() -> pd.DataFrame:
-    with connect_db() as conn:
-        tables = [
-            row["name"]
-            for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
-        ]
-        rows = []
-        for table in tables:
-            count = conn.execute(f"SELECT COUNT(*) AS total FROM {table}").fetchone()["total"]
-            rows.append({"Table": table, "Rows": count})
-    return pd.DataFrame(rows)
-
-
-@st.cache_data(show_spinner=False)
-def get_filter_options() -> dict:
-    return {
-        "cities": query_df("SELECT DISTINCT city FROM customers WHERE city IS NOT NULL ORDER BY city")["city"].tolist(),
-        "segments": query_df("SELECT DISTINCT customer_segment FROM customers WHERE customer_segment IS NOT NULL ORDER BY customer_segment")["customer_segment"].tolist(),
-        "risk_levels": query_df("SELECT DISTINCT risk_level FROM customer_churn_scores WHERE risk_level IS NOT NULL ORDER BY risk_level")["risk_level"].tolist(),
-        "value_segments": query_df("SELECT DISTINCT value_segment FROM customer_value_segments WHERE value_segment IS NOT NULL ORDER BY value_segment")["value_segment"].tolist(),
-        "service_types": query_df("SELECT DISTINCT service_type FROM subscriptions WHERE service_type IS NOT NULL ORDER BY service_type")["service_type"].tolist(),
-        "months": query_df("SELECT DISTINCT summary_month FROM customer_monthly_summary ORDER BY summary_month")["summary_month"].tolist(),
+@st.cache_data(ttl=300, show_spinner=False)
+def get_options() -> Dict[str, List[str]]:
+    options_sql = {
+        "cities": "SELECT DISTINCT city AS value FROM customers WHERE city IS NOT NULL ORDER BY city",
+        "customer_segments": "SELECT DISTINCT customer_segment AS value FROM customers WHERE customer_segment IS NOT NULL ORDER BY customer_segment",
+        "value_segments": "SELECT DISTINCT value_segment AS value FROM customer_value_segments WHERE value_segment IS NOT NULL ORDER BY value_segment",
+        "risk_levels": "SELECT DISTINCT risk_level AS value FROM customer_churn_scores WHERE risk_level IS NOT NULL ORDER BY risk_level",
+        "service_types": "SELECT DISTINCT service_type AS value FROM subscriptions WHERE service_type IS NOT NULL ORDER BY service_type",
+        "plan_categories": "SELECT DISTINCT plan_category AS value FROM plans WHERE plan_category IS NOT NULL ORDER BY plan_category",
+        "statuses": "SELECT DISTINCT status AS value FROM customers WHERE status IS NOT NULL ORDER BY status",
     }
+    out: Dict[str, List[str]] = {}
+    for key, sql in options_sql.items():
+        df = query_df(sql)
+        out[key] = df["value"].dropna().astype(str).tolist() if not df.empty else []
+    return out
 
 
-def build_customer_where(cities, segments, risk_levels, value_segments):
-    clauses = ["1=1"]
-    params = []
-    if cities:
-        clauses.append("c.city IN (" + ",".join("?" for _ in cities) + ")")
-        params.extend(cities)
-    if segments:
-        clauses.append("c.customer_segment IN (" + ",".join("?" for _ in segments) + ")")
-        params.extend(segments)
-    if risk_levels:
-        clauses.append("ch.risk_level IN (" + ",".join("?" for _ in risk_levels) + ")")
-        params.extend(risk_levels)
-    if value_segments:
-        clauses.append("vs.value_segment IN (" + ",".join("?" for _ in value_segments) + ")")
-        params.extend(value_segments)
-    return " AND ".join(clauses), tuple(params)
-
-
-@st.cache_data(show_spinner=False)
-def analytics_kpis(cities, segments, risk_levels, value_segments, month_start, month_end):
-    where, params = build_customer_where(cities, segments, risk_levels, value_segments)
-    customer_base = f"""
-        FROM customers c
-        LEFT JOIN customer_churn_scores ch ON ch.customer_id = c.customer_id
-        LEFT JOIN customer_value_segments vs ON vs.customer_id = c.customer_id
-        WHERE {where}
-    """
-    total_customers = scalar(f"SELECT COUNT(DISTINCT c.customer_id) AS value {customer_base}", params) or 0
-    high_risk = scalar(
-        f"SELECT COUNT(DISTINCT c.customer_id) AS value {customer_base} AND ch.risk_level = 'High'", params
-    ) or 0
-    avg_churn = scalar(f"SELECT AVG(ch.churn_score) AS value {customer_base}", params) or 0
-    avg_arpu = scalar(f"SELECT AVG(vs.arpu_jod) AS value {customer_base}", params) or 0
-
-    monthly_sql = f"""
-        SELECT
-            COALESCE(SUM(ms.total_revenue_jod), 0) AS revenue,
-            COALESCE(SUM(ms.data_used_gb), 0) AS data_gb,
-            COALESCE(SUM(ms.complaints_count), 0) AS complaints,
-            COALESCE(AVG(ms.payment_delay_days), 0) AS avg_payment_delay
-        FROM customer_monthly_summary ms
-        JOIN customers c ON c.customer_id = ms.customer_id
-        LEFT JOIN customer_churn_scores ch ON ch.customer_id = c.customer_id
-        LEFT JOIN customer_value_segments vs ON vs.customer_id = c.customer_id
-        WHERE {where}
-          AND ms.summary_month BETWEEN ? AND ?
-    """
-    df = query_df(monthly_sql, params + (month_start, month_end))
-    revenue = float(df.loc[0, "revenue"]) if not df.empty else 0
-    data_gb = float(df.loc[0, "data_gb"]) if not df.empty else 0
-    complaints = int(df.loc[0, "complaints"]) if not df.empty else 0
-    avg_payment_delay = float(df.loc[0, "avg_payment_delay"]) if not df.empty else 0
-
-    return {
-        "Customers": int(total_customers),
-        "High Risk": int(high_risk),
-        "Avg Churn": round(float(avg_churn), 3),
-        "Avg ARPU": round(float(avg_arpu), 2),
-        "Revenue": round(revenue, 2),
-        "Data Used GB": round(data_gb, 2),
-        "Complaints": complaints,
-        "Avg Delay": round(avg_payment_delay, 1),
-    }
-
-
-@st.cache_data(show_spinner=False)
-def dynamic_chart_data(metric, group_by, cities, segments, risk_levels, value_segments, month_start, month_end, top_n):
-    where, params = build_customer_where(cities, segments, risk_levels, value_segments)
-    group_map = {
-        "City": "c.city",
-        "Customer Segment": "c.customer_segment",
-        "Risk Level": "ch.risk_level",
-        "Value Segment": "vs.value_segment",
-        "Service Type": "s.service_type",
-        "Plan Category": "p.plan_category",
-        "Plan Technology": "p.technology",
-    }
-    group_expr = group_map.get(group_by, "c.city")
-
-    metric_map = {
-        "Customers": ("COUNT(DISTINCT c.customer_id)", "customers"),
-        "Revenue": ("SUM(ms.total_revenue_jod)", "revenue_jod"),
-        "Avg Churn Score": ("AVG(ch.churn_score)", "avg_churn_score"),
-        "Avg ARPU": ("AVG(vs.arpu_jod)", "avg_arpu_jod"),
-        "Data Usage GB": ("SUM(ms.data_used_gb)", "data_used_gb"),
-        "Complaints": ("SUM(ms.complaints_count)", "complaints"),
-        "Payment Delay Days": ("AVG(ms.payment_delay_days)", "avg_payment_delay"),
-    }
-    metric_expr, metric_alias = metric_map.get(metric, metric_map["Customers"])
-
-    # Subscription/plan joins can multiply monthly rows. For the current demo DB this is acceptable for directional analysis,
-    # and the grouped customer count uses DISTINCT to protect the customer metric.
-    sql = f"""
-        SELECT
-            COALESCE({group_expr}, 'Unknown') AS label,
-            ROUND(COALESCE({metric_expr}, 0), 3) AS value
-        FROM customers c
-        LEFT JOIN customer_churn_scores ch ON ch.customer_id = c.customer_id
-        LEFT JOIN customer_value_segments vs ON vs.customer_id = c.customer_id
-        LEFT JOIN subscriptions s ON s.customer_id = c.customer_id
-        LEFT JOIN plans p ON p.plan_id = s.plan_id
-        LEFT JOIN customer_monthly_summary ms ON ms.customer_id = c.customer_id
-            AND ms.summary_month BETWEEN ? AND ?
-        WHERE {where}
-        GROUP BY label
-        ORDER BY value DESC
-        LIMIT ?
-    """
-    df = query_df(sql, (month_start, month_end) + params + (top_n,))
-    return df, sql, metric_alias
-
-
-@st.cache_data(show_spinner=False)
-def get_smart_segments(top_n: int = 15) -> dict:
-    high_value_risk = query_df(
+@st.cache_data(ttl=300, show_spinner=False)
+def get_month_bounds() -> Tuple[date, date]:
+    df = query_df(
         """
         SELECT
-            c.customer_id, c.full_name, c.city, c.customer_segment,
-            vs.value_segment, ROUND(vs.arpu_jod, 2) AS arpu_jod,
-            ROUND(ch.churn_score, 3) AS churn_score, ch.risk_level, ch.main_risk_reason, ch.recommended_action
-        FROM customers c
-        JOIN customer_churn_scores ch ON ch.customer_id = c.customer_id
-        JOIN customer_value_segments vs ON vs.customer_id = c.customer_id
-        WHERE ch.risk_level = 'High'
-        ORDER BY vs.arpu_jod DESC, ch.churn_score DESC
-        LIMIT ?
-        """,
-        (top_n,),
-    )
-    overdue_risk = query_df(
-        """
-        SELECT
-            c.customer_id, c.full_name, c.city,
-            COUNT(i.invoice_id) AS overdue_invoices,
-            ROUND(SUM(i.total_amount_jod), 2) AS overdue_amount_jod,
-            ROUND(ch.churn_score, 3) AS churn_score,
-            ch.risk_level
-        FROM invoices i
-        JOIN accounts a ON a.account_id = i.account_id
-        JOIN customers c ON c.customer_id = a.customer_id
-        LEFT JOIN customer_churn_scores ch ON ch.customer_id = c.customer_id
-        WHERE i.payment_status != 'Paid' AND i.days_overdue > 0
-        GROUP BY c.customer_id, c.full_name, c.city, ch.churn_score, ch.risk_level
-        ORDER BY overdue_amount_jod DESC, churn_score DESC
-        LIMIT ?
-        """,
-        (top_n,),
-    )
-    five_g_ready = query_df(
-        """
-        SELECT DISTINCT
-            c.customer_id, c.full_name, c.city, p.plan_name, p.technology AS plan_technology,
-            d.brand, d.model, d.device_5g_capable_flag
-        FROM devices d
-        JOIN customers c ON c.customer_id = d.customer_id
-        JOIN subscriptions s ON s.subscription_id = d.subscription_id
-        JOIN plans p ON p.plan_id = s.plan_id
-        WHERE d.device_5g_capable_flag = 1 AND COALESCE(p.technology, '') != '5G'
-        LIMIT ?
-        """,
-        (top_n,),
-    )
-    unresolved_complaints = query_df(
-        """
-        SELECT
-            c.customer_id, c.full_name, c.city,
-            COUNT(cp.complaint_id) AS open_complaints,
-            MAX(cp.complaint_date) AS latest_complaint,
-            GROUP_CONCAT(DISTINCT cp.complaint_category) AS categories
-        FROM complaints cp
-        JOIN customers c ON c.customer_id = cp.customer_id
-        WHERE cp.status != 'Resolved'
-        GROUP BY c.customer_id, c.full_name, c.city
-        ORDER BY open_complaints DESC, latest_complaint DESC
-        LIMIT ?
-        """,
-        (top_n,),
-    )
-    return {
-        "High value + high churn risk": high_value_risk,
-        "Overdue invoices + churn signal": overdue_risk,
-        "5G capable device, non-5G plan": five_g_ready,
-        "Open complaints needing follow-up": unresolved_complaints,
-    }
-
-
-@st.cache_data(show_spinner=False)
-def customer_snapshot(customer_id: int) -> dict:
-    profile = query_df(
-        """
-        SELECT
-            c.customer_id, c.full_name, c.phone_number, c.email, c.city, c.governorate,
-            c.customer_segment, c.customer_type, c.status, c.preferred_language,
-            ch.risk_level, ROUND(ch.churn_score, 3) AS churn_score, ch.main_risk_reason, ch.recommended_action,
-            vs.value_segment, ROUND(vs.arpu_jod, 2) AS arpu_jod, ROUND(vs.total_revenue_6m_jod, 2) AS revenue_6m_jod
-        FROM customers c
-        LEFT JOIN customer_churn_scores ch ON ch.customer_id = c.customer_id
-        LEFT JOIN customer_value_segments vs ON vs.customer_id = c.customer_id
-        WHERE c.customer_id = ?
-        """,
-        (customer_id,),
-    )
-    subscriptions = query_df(
-        """
-        SELECT s.subscription_id, s.msisdn, s.service_type, s.status, p.plan_name, p.plan_category,
-               p.technology, p.monthly_fee_jod, s.activation_date, s.contract_end_date
-        FROM subscriptions s
-        LEFT JOIN plans p ON p.plan_id = s.plan_id
-        WHERE s.customer_id = ?
-        ORDER BY s.primary_subscription_flag DESC, s.activation_date DESC
-        """,
-        (customer_id,),
-    )
-    invoices = query_df(
-        """
-        SELECT i.invoice_id, i.issue_date, i.due_date, ROUND(i.total_amount_jod, 2) AS total_amount_jod,
-               i.payment_status, i.days_overdue
-        FROM invoices i
-        JOIN accounts a ON a.account_id = i.account_id
-        WHERE a.customer_id = ?
-        ORDER BY i.issue_date DESC
-        LIMIT 10
-        """,
-        (customer_id,),
-    )
-    complaints = query_df(
-        """
-        SELECT complaint_date, complaint_category, severity, status, compensation_amount_jod
-        FROM complaints
-        WHERE customer_id = ?
-        ORDER BY complaint_date DESC
-        LIMIT 10
-        """,
-        (customer_id,),
-    )
-    usage = query_df(
-        """
-        SELECT summary_month, ROUND(total_revenue_jod, 2) AS revenue_jod,
-               ROUND(data_used_gb, 2) AS data_used_gb, voice_minutes, complaints_count, payment_delay_days
+          MIN(date(summary_month || '-01')) AS min_month,
+          MAX(date(summary_month || '-01')) AS max_month
         FROM customer_monthly_summary
-        WHERE customer_id = ?
-        ORDER BY summary_month
-        """,
-        (customer_id,),
+        """
     )
-    return {"profile": profile, "subscriptions": subscriptions, "invoices": invoices, "complaints": complaints, "usage": usage}
+    if df.empty or pd.isna(df.loc[0, "min_month"]):
+        today = date.today()
+        return today, today
+    start = datetime.strptime(str(df.loc[0, "min_month"]), "%Y-%m-%d").date()
+    end = datetime.strptime(str(df.loc[0, "max_month"]), "%Y-%m-%d").date()
+    return start, end
 
 
-# -----------------------------------------------------------------------------
-# UI helpers
-# -----------------------------------------------------------------------------
+def in_clause(column: str, values: Sequence[str], params: List[Any], clauses: List[str]) -> None:
+    values = [v for v in values if v]
+    if not values:
+        return
+    placeholders = ", ".join(["?"] * len(values))
+    clauses.append(f"{column} IN ({placeholders})")
+    params.extend(values)
 
-PALETTES = {
-    "Dark": {
-        "app_bg": "#07111f",
-        "app_bg_2": "#0b1020",
-        "surface": "rgba(15, 23, 42, 0.84)",
-        "surface_2": "rgba(30, 41, 59, 0.72)",
-        "surface_solid": "#111827",
-        "sidebar": "rgba(10, 15, 30, 0.96)",
-        "text": "#f8fafc",
-        "muted": "#94a3b8",
-        "subtle": "#cbd5e1",
-        "border": "rgba(255,255,255,0.11)",
-        "accent": "#7c3aed",
-        "accent_2": "#00a3e0",
-        "success": "#34d399",
-        "warning": "#fbbf24",
-        "danger": "#fb7185",
-        "shadow": "0 24px 70px rgba(0, 0, 0, .38)",
-        "plotly": "plotly_dark",
-    },
-    "Light": {
-        "app_bg": "#f6f8fb",
-        "app_bg_2": "#eef2ff",
-        "surface": "rgba(255, 255, 255, 0.86)",
-        "surface_2": "rgba(248, 250, 252, 0.92)",
-        "surface_solid": "#ffffff",
-        "sidebar": "rgba(255, 255, 255, 0.92)",
-        "text": "#0f172a",
-        "muted": "#64748b",
-        "subtle": "#334155",
-        "border": "rgba(15, 23, 42, 0.10)",
-        "accent": "#6d28d9",
-        "accent_2": "#0284c7",
-        "success": "#059669",
-        "warning": "#b45309",
-        "danger": "#e11d48",
-        "shadow": "0 20px 55px rgba(15, 23, 42, .12)",
-        "plotly": "plotly_white",
-    },
-}
 
-CHART_TYPES = {
-    "Bar": "bar",
-    "Horizontal bar": "horizontal_bar",
-    "Line": "line",
-    "Area": "area",
-    "Pie": "pie",
-    "Doughnut": "doughnut",
-}
+@st.cache_data(ttl=300, show_spinner=False)
+def load_filtered_monthly_data(
+    start_date: str,
+    end_date: str,
+    cities: Tuple[str, ...],
+    customer_segments: Tuple[str, ...],
+    value_segments: Tuple[str, ...],
+    risk_levels: Tuple[str, ...],
+    service_types: Tuple[str, ...],
+    plan_categories: Tuple[str, ...],
+    statuses: Tuple[str, ...],
+) -> pd.DataFrame:
+    clauses = ["date(cms.summary_month || '-01') BETWEEN ? AND ?"]
+    params: List[Any] = [start_date, end_date]
 
-NAV_ITEMS = [
-    ("Chat", "💬", "Copilot Chat"),
-    ("Analytics", "📊", "Dynamic Analytics"),
-    ("Customer", "👤", "Customer Workspace"),
-    ("Chart Builder", "📈", "AI Chart Builder"),
-    ("SQL Query Builder", "🧮", "SQL Lab"),
-    ("Suggested Questions", "✨", "Prompt Library"),
-]
+    in_clause("c.city", cities, params, clauses)
+    in_clause("c.customer_segment", customer_segments, params, clauses)
+    in_clause("cvs.value_segment", value_segments, params, clauses)
+    in_clause("ch.risk_level", risk_levels, params, clauses)
+    in_clause("s.service_type", service_types, params, clauses)
+    in_clause("p.plan_category", plan_categories, params, clauses)
+    in_clause("c.status", statuses, params, clauses)
+
+    where_sql = " AND ".join(clauses)
+    sql = f"""
+    SELECT
+      cms.summary_id,
+      cms.summary_month,
+      cms.customer_id,
+      cms.subscription_id,
+      c.full_name,
+      c.city,
+      c.governorate,
+      c.customer_type,
+      c.customer_segment,
+      c.status AS customer_status,
+      cvs.value_segment,
+      ch.risk_level,
+      ch.churn_score,
+      ch.main_risk_reason,
+      ch.recommended_action,
+      s.service_type,
+      s.msisdn,
+      s.status AS subscription_status,
+      p.plan_name,
+      p.plan_category,
+      p.monthly_fee_jod,
+      cms.total_revenue_jod,
+      cms.voice_minutes,
+      cms.data_used_gb,
+      cms.sms_count,
+      cms.support_interactions_count,
+      cms.complaints_count,
+      cms.payment_delay_days
+    FROM customer_monthly_summary cms
+    JOIN customers c ON c.customer_id = cms.customer_id
+    LEFT JOIN customer_churn_scores ch ON ch.customer_id = cms.customer_id
+    LEFT JOIN customer_value_segments cvs ON cvs.customer_id = cms.customer_id
+    LEFT JOIN subscriptions s ON s.subscription_id = cms.subscription_id
+    LEFT JOIN plans p ON p.plan_id = s.plan_id
+    WHERE {where_sql}
+    """
+    df = query_df(sql, tuple(params))
+    numeric_cols = [
+        "churn_score",
+        "monthly_fee_jod",
+        "total_revenue_jod",
+        "voice_minutes",
+        "data_used_gb",
+        "sms_count",
+        "support_interactions_count",
+        "complaints_count",
+        "payment_delay_days",
+    ]
+    for col in numeric_cols:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
+    return df
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def search_customers(term: str, limit: int = 30) -> pd.DataFrame:
+    term = term.strip()
+    if not term:
+        sql = """
+        SELECT customer_id, full_name, phone_number, email, city, customer_segment, status
+        FROM customers
+        ORDER BY customer_id
+        LIMIT ?
+        """
+        return query_df(sql, (limit,))
+
+    if term.isdigit():
+        sql = """
+        SELECT customer_id, full_name, phone_number, email, city, customer_segment, status
+        FROM customers
+        WHERE customer_id = ? OR phone_number LIKE ?
+        ORDER BY customer_id
+        LIMIT ?
+        """
+        return query_df(sql, (int(term), f"%{term}%", limit))
+
+    like = f"%{term}%"
+    sql = """
+    SELECT customer_id, full_name, phone_number, email, city, customer_segment, status
+    FROM customers
+    WHERE full_name LIKE ? OR email LIKE ? OR phone_number LIKE ? OR city LIKE ?
+    ORDER BY full_name
+    LIMIT ?
+    """
+    return query_df(sql, (like, like, like, like, limit))
+
+
+@st.cache_data(ttl=300, show_spinner=False)
+def load_customer_bundle(customer_id: int) -> Dict[str, pd.DataFrame]:
+    queries = {
+        "profile": """
+            SELECT c.*, ch.churn_score, ch.risk_level, ch.main_risk_reason, ch.recommended_action,
+                   cvs.arpu_jod, cvs.total_revenue_6m_jod, cvs.value_segment, cvs.lifetime_months
+            FROM customers c
+            LEFT JOIN customer_churn_scores ch ON ch.customer_id = c.customer_id
+            LEFT JOIN customer_value_segments cvs ON cvs.customer_id = c.customer_id
+            WHERE c.customer_id = ?
+        """,
+        "subscriptions": """
+            SELECT s.subscription_id, s.msisdn, s.service_type, s.activation_date, s.contract_end_date,
+                   s.status, s.auto_renewal_flag, s.primary_subscription_flag,
+                   p.plan_name, p.plan_category, p.monthly_fee_jod, p.data_allowance_gb, p.technology
+            FROM subscriptions s
+            LEFT JOIN plans p ON p.plan_id = s.plan_id
+            WHERE s.customer_id = ?
+            ORDER BY s.primary_subscription_flag DESC, s.activation_date DESC
+        """,
+        "invoices": """
+            SELECT i.invoice_id, i.issue_date, i.due_date, i.total_amount_jod, i.payment_status, i.days_overdue
+            FROM invoices i
+            JOIN accounts a ON a.account_id = i.account_id
+            WHERE a.customer_id = ?
+            ORDER BY i.issue_date DESC
+            LIMIT 12
+        """,
+        "complaints": """
+            SELECT complaint_date, complaint_category, severity, status, compensation_amount_jod, complaint_description
+            FROM complaints
+            WHERE customer_id = ?
+            ORDER BY complaint_date DESC
+            LIMIT 12
+        """,
+        "support": """
+            SELECT interaction_datetime, channel, reason_category, issue_type, priority,
+                   resolution_status, resolution_time_minutes, customer_sentiment
+            FROM support_interactions
+            WHERE customer_id = ?
+            ORDER BY interaction_datetime DESC
+            LIMIT 12
+        """,
+        "monthly": """
+            SELECT summary_month, total_revenue_jod, data_used_gb, voice_minutes, sms_count,
+                   support_interactions_count, complaints_count, payment_delay_days, churn_score
+            FROM customer_monthly_summary
+            WHERE customer_id = ?
+            ORDER BY summary_month
+        """,
+        "campaigns": """
+            SELECT cr.sent_date, ca.campaign_name, ca.campaign_type, cr.channel, cr.response_status,
+                   cr.converted_flag, cr.revenue_generated_jod
+            FROM customer_campaign_responses cr
+            JOIN campaigns ca ON ca.campaign_id = cr.campaign_id
+            WHERE cr.customer_id = ?
+            ORDER BY cr.sent_date DESC
+            LIMIT 12
+        """,
+        "devices": """
+            SELECT device_type, brand, model, os, purchase_date, device_5g_capable_flag,
+                   installment_flag, monthly_installment_jod
+            FROM devices
+            WHERE customer_id = ?
+            ORDER BY purchase_date DESC
+        """,
+    }
+    return {name: query_df(sql, (customer_id,)) for name, sql in queries.items()}
+
+
+# ============================================================
+# State and chat management
+# ============================================================
 
 SUGGESTED_QUESTIONS = [
     "Show me the full profile, plan, complaints, churn risk, invoices, and recommended action for customer ID 9.",
@@ -429,310 +953,53 @@ SUGGESTED_QUESTIONS = [
     "Which marketing campaigns have the best conversion rate?",
     "Which customer segments bring the most revenue in the last 6 months?",
     "Which cities have the highest number of affected customers from network events?",
-    "Which customers have the highest data usage this month?",
-    "Which customers generated the highest roaming cost?",
     "Which customers have 5G capable devices but are not on a 5G plan?",
-    "Which add-ons are most used by customers?",
-    "Which payment channels are used the most?",
-    "Summarize recent support interactions by channel, reason, sentiment, and priority.",
+]
+
+NAV_ITEMS = [
+    ("Ask AI", "💬", "Ask AI"),
+    ("Executive Overview", "📊", "Overview"),
+    ("Dynamic Analytics", "🎛️", "Analytics"),
+    ("Customer Explorer", "👤", "Customer"),
+    ("Chart Builder", "📈", "Charts"),
+    ("SQL Console", "🧮", "SQL"),
 ]
 
 
-def get_logo_data_uri() -> str:
-    if not LOGO_PATH.exists():
-        return ""
-    encoded = base64.b64encode(LOGO_PATH.read_bytes()).decode("utf-8")
-    return f"data:image/png;base64,{encoded}"
-
-
-LOGO_DATA_URI = get_logo_data_uri()
-
-
-def apply_theme(theme_name: str) -> None:
-    palette = PALETTES[theme_name]
-    css = f"""
-    <style>
-    :root {{
-      --app-bg: {palette['app_bg']};
-      --app-bg-2: {palette['app_bg_2']};
-      --surface: {palette['surface']};
-      --surface-2: {palette['surface_2']};
-      --surface-solid: {palette['surface_solid']};
-      --sidebar: {palette['sidebar']};
-      --text: {palette['text']};
-      --muted: {palette['muted']};
-      --subtle: {palette['subtle']};
-      --border: {palette['border']};
-      --accent: {palette['accent']};
-      --accent-2: {palette['accent_2']};
-      --success: {palette['success']};
-      --warning: {palette['warning']};
-      --danger: {palette['danger']};
-      --shadow: {palette['shadow']};
-      --radius-xl: 30px;
-      --radius-lg: 22px;
-      --radius-md: 16px;
-      --sidebar-width: 340px;
-    }}
-
-    html, body, .stApp, [data-testid="stAppViewContainer"], [data-testid="stAppViewContainer"] > .main {{
-      background:
-        radial-gradient(circle at 82% 5%, color-mix(in srgb, var(--accent) 20%, transparent), transparent 32%),
-        radial-gradient(circle at 10% 10%, color-mix(in srgb, var(--accent-2) 14%, transparent), transparent 30%),
-        linear-gradient(135deg, var(--app-bg) 0%, var(--app-bg-2) 55%, var(--app-bg) 100%) !important;
-      color: var(--text) !important;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
-    }}
-    * {{ font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important; }}
-    header[data-testid="stHeader"] {{ background: transparent !important; }}
-    [data-testid="stToolbar"] {{ color: var(--text) !important; }}
-    .block-container {{ max-width: 1280px !important; padding: 1.15rem 1.6rem 7rem !important; }}
-    h1, h2, h3, h4, h5, h6 {{ color: var(--text) !important; letter-spacing: -0.035em !important; }}
-    p, label, span, li, div {{ color: inherit; }}
-
-    section[data-testid="stSidebar"] {{
-      width: var(--sidebar-width) !important;
-      min-width: var(--sidebar-width) !important;
-      background: transparent !important;
-      border-right: 1px solid var(--border) !important;
-    }}
-    section[data-testid="stSidebar"] > div {{ padding: .85rem !important; background: transparent !important; }}
-    section[data-testid="stSidebar"] [data-testid="stSidebarContent"] {{
-      min-height: calc(100vh - 1.7rem) !important;
-      padding: 1rem .95rem 1.15rem !important;
-      border-radius: 28px !important;
-      background: var(--sidebar) !important;
-      border: 1px solid var(--border) !important;
-      box-shadow: var(--shadow) !important;
-      backdrop-filter: blur(24px) saturate(140%);
-    }}
-
-    .brand-card, .hero-card, .glass-card {{
-      background: var(--surface) !important;
-      border: 1px solid var(--border) !important;
-      box-shadow: var(--shadow) !important;
-      backdrop-filter: blur(24px) saturate(140%);
-      border-radius: var(--radius-xl);
-    }}
-    .brand-card {{ padding: 1rem; overflow: hidden; position: relative; margin-bottom: .95rem; }}
-    .brand-card::after {{ content:""; position:absolute; right:-55px; bottom:-70px; width:150px; height:150px; border-radius:999px; background: color-mix(in srgb, var(--accent) 22%, transparent); }}
-    .brand-row {{ display:flex; gap:.8rem; align-items:center; position:relative; z-index:2; }}
-    .brand-icon {{ width:46px; height:46px; min-width:46px; border-radius:17px; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--accent),var(--accent-2)); color:#fff; font-weight:900; box-shadow:0 14px 35px color-mix(in srgb, var(--accent) 28%, transparent); }}
-    .brand-title {{ font-size:1rem; font-weight:900; line-height:1.08; color:var(--text); }}
-    .brand-subtitle {{ font-size:.72rem; font-weight:800; color:var(--muted); margin-top:.15rem; }}
-    .brand-copy {{ position:relative; z-index:2; color:var(--muted); font-size:.76rem; line-height:1.55; margin-top:.75rem; }}
-    .sidebar-label {{ color:var(--muted); font-size:.66rem; font-weight:900; letter-spacing:.13em; text-transform:uppercase; margin:1.05rem 0 .45rem .15rem; }}
-    .sidebar-divider {{ height:1px; margin:.9rem 0; background:linear-gradient(90deg,transparent,var(--border),transparent); }}
-    .sidebar-footnote {{ margin-top:1rem; padding:.85rem; border-radius:18px; background:var(--surface-2); border:1px solid var(--border); color:var(--muted); font-size:.72rem; line-height:1.5; }}
-
-    .hero-card {{
-      position:relative; overflow:hidden; padding:1.55rem 1.7rem; min-height:158px; margin-bottom:1.25rem;
-      background:
-        radial-gradient(circle at 88% 22%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 34%),
-        radial-gradient(circle at 98% 88%, color-mix(in srgb, var(--accent-2) 18%, transparent), transparent 30%),
-        var(--surface) !important;
-    }}
-    .hero-card::before {{ content:""; position:absolute; inset:0; background:linear-gradient(135deg, color-mix(in srgb, var(--surface-solid) 18%, transparent), transparent); pointer-events:none; }}
-    .hero-inner {{ position:relative; z-index:2; max-width:850px; }}
-    .eyebrow {{ color:var(--accent-2); font-weight:900; font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; margin-bottom:.45rem; }}
-    .hero-title {{ color:var(--text); font-weight:950; font-size:2rem; letter-spacing:-.055em; line-height:1.04; margin-bottom:.5rem; }}
-    .hero-copy {{ color:var(--muted); font-size:.96rem; line-height:1.62; max-width:760px; }}
-    .hero-logo {{ position:absolute; right:1.6rem; top:50%; transform:translateY(-50%); width:148px; opacity:.18; filter:grayscale(1); }}
-
-    .mini-card {{ padding:1rem; border-radius:22px; background:var(--surface); border:1px solid var(--border); box-shadow:var(--shadow); min-height:110px; }}
-    .mini-label {{ color:var(--muted); font-size:.74rem; font-weight:800; letter-spacing:.03em; }}
-    .mini-value {{ color:var(--text); font-size:1.65rem; font-weight:950; letter-spacing:-.04em; margin-top:.18rem; }}
-    .mini-note {{ color:var(--muted); font-size:.72rem; margin-top:.25rem; }}
-    .status-pill {{ display:inline-flex; align-items:center; gap:.35rem; padding:.35rem .62rem; border-radius:999px; font-size:.72rem; font-weight:850; color:var(--text); background:var(--surface-2); border:1px solid var(--border); }}
-    .chip-row {{ display:flex; gap:.45rem; flex-wrap:wrap; margin:.45rem 0 .9rem; }}
-    .metric-grid {{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.9rem; margin:.7rem 0 1.1rem; }}
-
-    div[data-testid="stMetric"] {{ background:var(--surface) !important; border:1px solid var(--border) !important; border-radius:22px !important; padding:17px !important; box-shadow:var(--shadow) !important; }}
-    div[data-testid="stMetric"] label, div[data-testid="stMetric"] [data-testid="stMetricDelta"] {{ color:var(--muted) !important; }}
-    div[data-testid="stMetricValue"] {{ color:var(--text) !important; font-weight:950 !important; }}
-    .stPlotlyChart {{ background:var(--surface) !important; border:1px solid var(--border) !important; border-radius:24px !important; padding:.9rem !important; box-shadow:var(--shadow) !important; }}
-    div[data-testid="stDataFrame"] {{ border-radius:20px !important; overflow:hidden !important; border:1px solid var(--border) !important; box-shadow:var(--shadow) !important; }}
-    div[data-testid="stExpander"] {{ background:var(--surface) !important; border:1px solid var(--border) !important; border-radius:20px !important; box-shadow:var(--shadow) !important; overflow:hidden !important; }}
-    div[data-testid="stExpander"] summary {{ color:var(--text) !important; font-weight:850 !important; }}
-    div[data-testid="stTabs"] button {{ color:var(--muted) !important; font-weight:850 !important; }}
-    div[data-testid="stTabs"] button[aria-selected="true"] {{ color:var(--text) !important; }}
-    div[data-testid="stCodeBlock"] {{ border-radius:18px !important; overflow:hidden !important; border:1px solid var(--border) !important; }}
-    div[data-testid="stAlert"] {{ border-radius:18px !important; }}
-
-    input, textarea, [data-baseweb="select"] > div {{
-      border-radius:16px !important;
-      border-color:var(--border) !important;
-      background:var(--surface-2) !important;
-      color:var(--text) !important;
-    }}
-    input:focus, textarea:focus {{ box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent) !important; border-color:var(--accent) !important; }}
-
-    div.stButton > button, div[data-testid="stDownloadButton"] > button {{
-      min-height:42px !important; border-radius:15px !important; border:1px solid var(--border) !important;
-      background:var(--surface-2) !important; color:var(--text) !important; font-weight:850 !important; box-shadow:none !important;
-      transition: all .16s ease !important;
-    }}
-    div.stButton > button:hover, div[data-testid="stDownloadButton"] > button:hover {{
-      transform:translateY(-1px); border-color:color-mix(in srgb, var(--accent) 45%, var(--border)) !important;
-      background:color-mix(in srgb, var(--surface-solid) 72%, var(--accent) 8%) !important;
-    }}
-    div.stButton > button[kind="primary"], div[data-testid="stDownloadButton"] > button[kind="primary"] {{
-      background:linear-gradient(135deg,var(--accent),var(--accent-2)) !important; color:#fff !important; border-color:transparent !important;
-      box-shadow:0 16px 34px color-mix(in srgb, var(--accent) 28%, transparent) !important;
-    }}
-    section[data-testid="stSidebar"] div.stButton > button {{ width:100% !important; justify-content:flex-start !important; text-align:left !important; padding:.58rem .7rem !important; min-height:42px !important; box-shadow:none !important; }}
-    section[data-testid="stSidebar"] div.stButton > button[kind="primary"] {{ justify-content:flex-start !important; }}
-    section[data-testid="stSidebar"] .stTextInput input {{ min-height:42px !important; }}
-
-    .st-key-chat_input_shell {{
-      position: fixed; left: calc(var(--sidebar-width) + 50%); transform: translateX(-50%); bottom: 1.15rem; z-index: 1000;
-      width: min(820px, calc(100vw - 445px)); padding:.42rem .48rem .42rem 1rem; border-radius:999px; background:var(--surface) !important;
-      border:1px solid var(--border); box-shadow:var(--shadow); backdrop-filter:blur(24px) saturate(140%);
-    }}
-    .st-key-chat_input_shell [data-testid="stForm"] {{ border:0 !important; padding:0 !important; background:transparent !important; }}
-    .st-key-chat_input_shell div[data-testid="stHorizontalBlock"] {{ align-items:center !important; gap:.45rem !important; }}
-    .st-key-chat_input_shell input {{ min-height:48px !important; border:0 !important; background:transparent !important; box-shadow:none !important; color:var(--text) !important; }}
-    .st-key-chat_input_shell button {{ width:48px !important; min-width:48px !important; height:48px !important; min-height:48px !important; padding:0 !important; border-radius:999px !important; justify-content:center !important; text-align:center !important; font-size:0 !important; }}
-    .st-key-chat_input_shell button::after {{ content:"➜"; font-size:1.1rem; color:#fff; }}
-    div[data-testid="stChatMessage"] {{ padding:.45rem 0 !important; background:transparent !important; }}
-    div[data-testid="stChatMessageContent"] {{ color:var(--subtle) !important; line-height:1.68 !important; font-size:.95rem !important; }}
-    div[data-testid="chatAvatarIcon-assistant"] {{ background:linear-gradient(135deg,var(--accent),var(--accent-2)) !important; }}
-
-    @media (max-width: 980px) {{
-      :root {{ --sidebar-width: 0px; }}
-      section[data-testid="stSidebar"] {{ width:auto !important; min-width:auto !important; }}
-      .block-container {{ padding-left:1rem !important; padding-right:1rem !important; }}
-      .st-key-chat_input_shell {{ left:1rem; right:1rem; transform:none; width:auto; }}
-      .hero-card {{ padding:1.2rem; min-height:auto; }}
-      .hero-title {{ font-size:1.48rem; }}
-      .hero-logo {{ position:relative; right:auto; top:auto; transform:none; width:92px; margin-top:1rem; }}
-      .metric-grid {{ grid-template-columns:repeat(2,minmax(0,1fr)); }}
-    }}
-    @media (max-width: 620px) {{ .metric-grid {{ grid-template-columns:1fr; }} }}
-    </style>
-    """
-    st.markdown(css, unsafe_allow_html=True)
-
-
-def plotly_layout(fig):
-    theme_name = st.session_state.get("theme", "Dark")
-    palette = PALETTES[theme_name]
-    fig.update_layout(
-        template=palette["plotly"],
-        margin=dict(l=20, r=20, t=38, b=20),
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(family="Inter", color=palette["text"]),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-    )
-    return fig
-
-
-def render_chart(df: pd.DataFrame, chart_type: str, title: str, metric_label: str = "Value"):
-    if df is None or df.empty:
-        st.info("No matching data found for the selected filters.")
-        return
-    df = df.copy()
-    df["value"] = pd.to_numeric(df["value"], errors="coerce").fillna(0)
-    if chart_type == "pie":
-        fig = px.pie(df, names="label", values="value", title=title, height=430)
-    elif chart_type == "doughnut":
-        fig = px.pie(df, names="label", values="value", hole=0.52, title=title, height=430)
-    elif chart_type == "line":
-        fig = px.line(df, x="label", y="value", markers=True, title=title, height=430)
-    elif chart_type == "area":
-        fig = px.area(df, x="label", y="value", title=title, height=430)
-    elif chart_type == "horizontal_bar":
-        fig = px.bar(df.sort_values("value"), x="value", y="label", orientation="h", title=title, height=430, labels={"value": metric_label, "label": ""})
-    else:
-        fig = px.bar(df, x="label", y="value", title=title, height=430, labels={"value": metric_label, "label": ""})
-    st.plotly_chart(plotly_layout(fig), use_container_width=True)
-
-
-def safe_html(value) -> str:  # noqa: ANN001
-    return html.escape("" if value is None else str(value))
-
-
-def hero(title: str, subtitle: str, eyebrow: str = "ZAIN 360 COPILOT"):
-    logo_html = f'<img class="hero-logo" src="{LOGO_DATA_URI}" alt="Zain Logo">' if LOGO_DATA_URI else ""
-    st.markdown(
-        f"""
-        <div class="hero-card">
-          <div class="hero-inner">
-            <div class="eyebrow">{safe_html(eyebrow)}</div>
-            <div class="hero-title">{safe_html(title)}</div>
-            <div class="hero-copy">{safe_html(subtitle)}</div>
-          </div>
-          {logo_html}
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def kpi_card(label: str, value: str, note: str = ""):
-    st.markdown(
-        f"""
-        <div class="mini-card">
-          <div class="mini-label">{safe_html(label)}</div>
-          <div class="mini-value">{safe_html(value)}</div>
-          <div class="mini-note">{safe_html(note)}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def format_number(value, decimals=0, suffix="") -> str:  # noqa: ANN001
-    try:
-        val = float(value)
-    except Exception:
-        return str(value)
-    if decimals == 0:
-        return f"{val:,.0f}{suffix}"
-    return f"{val:,.{decimals}f}{suffix}"
-
-
-def dataframe_download(df: pd.DataFrame, filename: str, label: str = "Download CSV"):
-    if df is not None and not df.empty:
-        st.download_button(
-            label,
-            data=df.to_csv(index=False).encode("utf-8"),
-            file_name=filename,
-            mime="text/csv",
-            use_container_width=True,
-        )
-
-
-# -----------------------------------------------------------------------------
-# Chat state
-# -----------------------------------------------------------------------------
-
-
-def default_assistant_message():
+def default_assistant_message() -> Dict[str, str]:
     return {
         "role": "assistant",
-        "content": "Hello. Ask me a business question about customers, churn, billing, complaints, campaigns, network events, or usage insights.",
+        "content": (
+            "Hello. I can answer business questions about customers, churn, billing, complaints, "
+            "campaigns, network events, usage, and revenue."
+        ),
     }
 
 
-def init_session_state():
-    st.session_state.setdefault("theme", "Dark")
-    st.session_state.setdefault("page", "Chat")
-    st.session_state.setdefault("chat_search", "")
-    st.session_state.setdefault("open_chat_menu_id", None)
-    st.session_state.setdefault("rename_chat_id", None)
-    st.session_state.setdefault("rename_chat_value", "")
+def title_from_question(question: str) -> str:
+    cleaned = " ".join(question.split())
+    return cleaned[:36] + "..." if len(cleaned) > 36 else cleaned or "New Chat"
+
+
+def init_state() -> None:
+    if "page" not in st.session_state:
+        st.session_state.page = "Ask AI"
     if "chat_sessions" not in st.session_state:
         st.session_state.chat_sessions = [
-            {"id": "chat_1", "title": "New Chat", "messages": [default_assistant_message()], "created_at": datetime.now().isoformat(timespec="seconds")}
+            {"id": f"chat_1_{int(time.time())}", "title": "New Chat", "messages": [default_assistant_message()]}
         ]
-        st.session_state.current_chat_id = "chat_1"
-    st.session_state.setdefault("current_chat_id", st.session_state.chat_sessions[0]["id"])
+    if "current_chat_id" not in st.session_state:
+        st.session_state.current_chat_id = st.session_state.chat_sessions[0]["id"]
+    if "rename_chat_id" not in st.session_state:
+        st.session_state.rename_chat_id = None
+    if "rename_chat_value" not in st.session_state:
+        st.session_state.rename_chat_value = ""
+    if "chat_search" not in st.session_state:
+        st.session_state.chat_search = ""
 
 
-def current_chat():
-    init_session_state()
+def current_chat() -> Dict[str, Any]:
+    init_state()
     for chat in st.session_state.chat_sessions:
         if chat["id"] == st.session_state.current_chat_id:
             return chat
@@ -740,441 +1007,131 @@ def current_chat():
     return st.session_state.chat_sessions[0]
 
 
-def title_from_question(question: str) -> str:
-    cleaned = " ".join(question.split())
-    return cleaned[:38] + "..." if len(cleaned) > 38 else cleaned or "New Chat"
-
-
-def create_new_chat():
-    next_id = f"chat_{int(time.time() * 1000)}"
-    st.session_state.chat_sessions.insert(
-        0,
-        {"id": next_id, "title": "New Chat", "messages": [default_assistant_message()], "created_at": datetime.now().isoformat(timespec="seconds")},
-    )
+def create_new_chat() -> None:
+    next_id = f"chat_{len(st.session_state.chat_sessions) + 1}_{int(time.time())}"
+    chat = {"id": next_id, "title": "New Chat", "messages": [default_assistant_message()]}
+    st.session_state.chat_sessions.insert(0, chat)
     st.session_state.current_chat_id = next_id
-    st.session_state.page = "Chat"
-    st.session_state.open_chat_menu_id = None
+    st.session_state.page = "Ask AI"
     st.session_state.rename_chat_id = None
+    st.session_state.rename_chat_value = ""
 
 
-def rename_chat(chat_id: str, new_title: str):
-    title = " ".join(new_title.split()).strip()
-    if not title:
+def delete_chat(chat_id: str) -> None:
+    st.session_state.chat_sessions = [c for c in st.session_state.chat_sessions if c["id"] != chat_id]
+    if not st.session_state.chat_sessions:
+        st.session_state.chat_sessions = [
+            {"id": f"chat_1_{int(time.time())}", "title": "New Chat", "messages": [default_assistant_message()]}
+        ]
+    if st.session_state.current_chat_id == chat_id:
+        st.session_state.current_chat_id = st.session_state.chat_sessions[0]["id"]
+    if st.session_state.rename_chat_id == chat_id:
+        st.session_state.rename_chat_id = None
+        st.session_state.rename_chat_value = ""
+
+
+def rename_chat(chat_id: str, new_title: str) -> None:
+    clean = " ".join(new_title.split()).strip()
+    if not clean:
         return
     for chat in st.session_state.chat_sessions:
         if chat["id"] == chat_id:
-            chat["title"] = title
+            chat["title"] = clean
             break
     st.session_state.rename_chat_id = None
-    st.session_state.open_chat_menu_id = None
+    st.session_state.rename_chat_value = ""
 
 
-def delete_chat(chat_id: str):
-    st.session_state.chat_sessions = [c for c in st.session_state.chat_sessions if c["id"] != chat_id]
-    if not st.session_state.chat_sessions:
-        create_new_chat()
-    if st.session_state.current_chat_id == chat_id:
-        st.session_state.current_chat_id = st.session_state.chat_sessions[0]["id"]
-    st.session_state.open_chat_menu_id = None
-
-
-def export_chat_markdown(chat: dict) -> str:
-    lines = [f"# {chat['title']}", "", f"Exported: {datetime.now().isoformat(timespec='seconds')}", ""]
-    for message in chat["messages"]:
-        lines.append(f"## {message['role'].title()}")
-        lines.append(message.get("content", ""))
-        if message.get("sql"):
-            lines.append("\n```sql")
-            lines.append(message["sql"])
-            lines.append("```")
+def chat_to_markdown(chat: Dict[str, Any]) -> str:
+    lines = [f"# {chat['title']}", ""]
+    for msg in chat.get("messages", []):
+        lines.append(f"## {msg.get('role', '').title()}")
+        lines.append(str(msg.get("content", "")))
+        if msg.get("sql"):
+            lines.extend(["", "```sql", msg["sql"], "```"])
         lines.append("")
     return "\n".join(lines)
 
 
-# -----------------------------------------------------------------------------
-# Pages
-# -----------------------------------------------------------------------------
-
-
-def show_chat():
-    chat = current_chat()
-    hero(
-        "Customer 360 Chat",
-        f"{chat['title']} · Ask natural-language questions and inspect the SQL behind the answer when available.",
-    )
-
-    quick_cols = st.columns(4)
-    quick_prompts = [
-        "Top churn risks",
-        "Open complaints",
-        "Overdue invoices",
-        "Best campaigns",
-    ]
-    quick_questions = [
-        "Find the top 10 customers with the highest churn score and explain why they are at risk.",
-        "What are the most common complaint categories and how many are still unresolved?",
-        "Which customers have overdue invoices and high churn risk?",
-        "Which marketing campaigns have the best conversion rate?",
-    ]
-    for col, label, q in zip(quick_cols, quick_prompts, quick_questions):
-        if col.button(label, use_container_width=True):
-            submit_prompt(q)
-            st.rerun()
-
-    for message in chat["messages"]:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-            if message.get("sql"):
-                with st.expander("SQL query used"):
-                    st.code(message["sql"], language="sql")
-
-    chat_bar = st.container(key="chat_input_shell")
-    with chat_bar:
-        with st.form("chat_form", clear_on_submit=True):
-            input_col, send_col = st.columns([8, 1])
-            with input_col:
-                prompt = st.text_input(
-                    "Question",
-                    placeholder="Ask Zain 360 Copilot anything about the database...",
-                    label_visibility="collapsed",
-                )
-            with send_col:
-                submitted = st.form_submit_button("Send", type="primary")
-
-    if submitted and prompt.strip():
-        submit_prompt(prompt.strip())
-        st.rerun()
-
-
-def submit_prompt(prompt: str):
-    chat = current_chat()
-    if chat["title"] == "New Chat":
-        chat["title"] = title_from_question(prompt)
-    chat["messages"].append({"role": "user", "content": prompt})
-    try:
-        with st.spinner("Analyzing database..."):
-            payload = ask_sql_agent_payload(prompt)
-        answer = payload.get("answer", "No answer was returned.")
-        sql = payload.get("sql", "")
-    except Exception as exc:
-        answer = (
-            "I could not complete the AI answer. "
-            f"Reason: {type(exc).__name__}: {exc}\n\n"
-            "Tip: confirm that OPENAI_API_KEY is configured in Streamlit secrets and that the database file is present."
-        )
-        sql = ""
-    chat["messages"].append({"role": "assistant", "content": answer, "sql": sql})
-
-
-def show_analytics():
-    hero(
-        "Dynamic Analytics",
-        "Adjust filters, select metrics, change grouping, switch chart types, and export the filtered analysis as CSV.",
-    )
-    opts = get_filter_options()
-    if not opts["months"]:
-        st.error("No monthly summary data was found.")
-        return
-
-    with st.expander("Analytics controls", expanded=True):
-        row1 = st.columns(4)
-        cities = row1[0].multiselect("City", opts["cities"], placeholder="All cities")
-        segments = row1[1].multiselect("Customer segment", opts["segments"], placeholder="All segments")
-        risk_levels = row1[2].multiselect("Risk level", opts["risk_levels"], placeholder="All risks")
-        value_segments = row1[3].multiselect("Value segment", opts["value_segments"], placeholder="All values")
-
-        row2 = st.columns([1.2, 1.2, 1, 1, 1])
-        month_start = row2[0].selectbox("Start month", opts["months"], index=0)
-        month_end = row2[1].selectbox("End month", opts["months"], index=len(opts["months"]) - 1)
-        metric = row2[2].selectbox(
-            "Metric",
-            ["Customers", "Revenue", "Avg Churn Score", "Avg ARPU", "Data Usage GB", "Complaints", "Payment Delay Days"],
-            index=1,
-        )
-        group_by = row2[3].selectbox(
-            "Group by",
-            ["City", "Customer Segment", "Risk Level", "Value Segment", "Service Type", "Plan Category", "Plan Technology"],
-        )
-        top_n = row2[4].slider("Top results", 3, 25, 10)
-
-        chart_label = st.radio("Chart style", list(CHART_TYPES.keys()), horizontal=True, index=0)
-
-    if month_start > month_end:
-        st.warning("Start month is after end month. Please adjust the range.")
-        return
-
-    kpis = analytics_kpis(cities, segments, risk_levels, value_segments, month_start, month_end)
-    cols = st.columns(4)
-    with cols[0]:
-        kpi_card("Customers", format_number(kpis["Customers"]), "Filtered customer base")
-    with cols[1]:
-        kpi_card("Revenue", format_number(kpis["Revenue"], 2, " JOD"), f"{month_start} to {month_end}")
-    with cols[2]:
-        kpi_card("Avg Churn", format_number(kpis["Avg Churn"], 3), f"High-risk: {kpis['High Risk']:,}")
-    with cols[3]:
-        kpi_card("Avg ARPU", format_number(kpis["Avg ARPU"], 2, " JOD"), f"Avg delay: {kpis['Avg Delay']} days")
-
-    chart_df, sql, metric_alias = dynamic_chart_data(
-        metric,
-        group_by,
-        cities,
-        segments,
-        risk_levels,
-        value_segments,
-        month_start,
-        month_end,
-        top_n,
-    )
-    render_chart(chart_df, CHART_TYPES[chart_label], f"{metric} by {group_by}", metric_alias)
-
-    action_cols = st.columns([1, 1, 2])
-    with action_cols[0]:
-        dataframe_download(chart_df, "zain_dynamic_analytics.csv")
-    with action_cols[1]:
-        if st.button("Refresh data", use_container_width=True):
-            st.cache_data.clear()
-            st.rerun()
-    with st.expander("SQL behind this analysis"):
-        st.code(sql, language="sql")
-
-    st.markdown("### Smart Segments")
-    smart = get_smart_segments(top_n=top_n)
-    tabs = st.tabs(list(smart.keys()))
-    for tab, (title, df) in zip(tabs, smart.items()):
-        with tab:
-            st.caption("Use these lists for next-best-action workflows and retention follow-up.")
-            st.dataframe(df, use_container_width=True, hide_index=True)
-            dataframe_download(df, f"{title.lower().replace(' ', '_').replace('+', 'and')}.csv", "Download segment")
-
-
-def show_customer_workspace():
-    hero(
-        "Customer Workspace",
-        "Look up a customer, review their profile, churn risk, subscriptions, invoices, complaints, and monthly trend in one place.",
-    )
-    total_customers = int(scalar("SELECT COUNT(*) AS value FROM customers") or 0)
-    col_a, col_b = st.columns([1, 3])
-    with col_a:
-        customer_id = st.number_input("Customer ID", min_value=1, max_value=max(total_customers, 1), value=9, step=1)
-    with col_b:
-        st.markdown('<div class="chip-row"><span class="status-pill">Search by ID</span><span class="status-pill">360 profile</span><span class="status-pill">Retention action</span><span class="status-pill">Billing view</span></div>', unsafe_allow_html=True)
-
-    data = customer_snapshot(int(customer_id))
-    profile = data["profile"]
-    if profile.empty:
-        st.warning("No customer found with this ID.")
-        return
-    p = profile.iloc[0].to_dict()
-
-    st.markdown("### Profile Summary")
-    cols = st.columns(4)
-    with cols[0]:
-        kpi_card("Customer", p.get("full_name", "-"), f"ID {p.get('customer_id')}")
-    with cols[1]:
-        kpi_card("Risk Level", p.get("risk_level", "-"), f"Score {p.get('churn_score', '-')}")
-    with cols[2]:
-        kpi_card("Value Segment", p.get("value_segment", "-"), f"ARPU {p.get('arpu_jod', 0)} JOD")
-    with cols[3]:
-        kpi_card("City", p.get("city", "-"), p.get("customer_segment", "-"))
-
-    st.info(f"Recommended action: {p.get('recommended_action') or 'No recommendation found.'}")
-    st.caption(f"Main risk reason: {p.get('main_risk_reason') or 'Not available.'}")
-
-    usage = data["usage"]
-    if not usage.empty:
-        usage_long = usage[["summary_month", "revenue_jod", "data_used_gb"]].melt(id_vars="summary_month", var_name="Metric", value_name="value")
-        fig = px.line(usage_long, x="summary_month", y="value", color="Metric", markers=True, title="Monthly customer trend", height=390)
-        st.plotly_chart(plotly_layout(fig), use_container_width=True)
-
-    tabs = st.tabs(["Subscriptions", "Invoices", "Complaints", "Raw Profile"])
-    with tabs[0]:
-        st.dataframe(data["subscriptions"], use_container_width=True, hide_index=True)
-    with tabs[1]:
-        st.dataframe(data["invoices"], use_container_width=True, hide_index=True)
-    with tabs[2]:
-        st.dataframe(data["complaints"], use_container_width=True, hide_index=True)
-    with tabs[3]:
-        st.dataframe(profile, use_container_width=True, hide_index=True)
-
-    prompt = f"Show me the full profile, plan, complaints, churn risk, invoices, and recommended action for customer ID {int(customer_id)}."
-    if st.button("Ask Copilot about this customer", type="primary", use_container_width=True):
-        st.session_state.page = "Chat"
-        submit_prompt(prompt)
-        st.rerun()
-
-
-def show_chart_builder():
-    hero(
-        "AI Chart Builder",
-        "Describe the chart you want, pick a chart type, and the app will generate a safe database-backed visualization.",
-    )
-    examples = [
-        "Build a chart based on customer with ID = 9 by their complaints type and number.",
-        "Show the top 10 cities by affected customers from network events.",
-        "Compare campaigns by conversion rate.",
-        "Show average revenue by value segment.",
-    ]
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        question = st.text_area("Chart request", value=examples[0], height=130)
-    with col2:
-        chart_label = st.selectbox("Chart type", list(CHART_TYPES.keys()))
-        st.caption("Tip: use top N, a customer ID, a city, or a business topic such as churn, complaints, revenue, campaigns, or network impact.")
-
-    if st.button("Create chart", type="primary", use_container_width=True):
-        with st.spinner("Creating chart..."):
-            chart = build_chart_from_question(question, CHART_TYPES[chart_label])
-        st.session_state.last_ai_chart = chart
-
-    chart = st.session_state.get("last_ai_chart")
-    if chart:
-        df = pd.DataFrame(chart.get("rows") or [])
-        if "label" in df.columns and "value" in df.columns:
-            render_chart(df[["label", "value"]], chart.get("chart_type", CHART_TYPES[chart_label]), chart.get("title", "Generated chart"), chart.get("metric", "Value"))
-            st.caption(chart.get("summary", ""))
-            with st.expander("Generated chart data"):
-                st.dataframe(df, use_container_width=True, hide_index=True)
-                dataframe_download(df, "generated_chart_data.csv")
-        else:
-            st.warning(chart.get("summary") or "No chart data returned.")
-
-
-def run_sql_callback(key_prefix: str):
-    sql = st.session_state.get(f"{key_prefix}_sql_editor", "").strip()
-    try:
-        st.session_state[f"{key_prefix}_sql_result"] = execute_sql_query(sql)
-        st.session_state[f"{key_prefix}_sql_error"] = ""
-    except Exception as exc:
-        st.session_state[f"{key_prefix}_sql_result"] = None
-        st.session_state[f"{key_prefix}_sql_error"] = f"{type(exc).__name__}: {exc}"
-
-
-def show_sql_builder():
-    hero(
-        "SQL Lab",
-        "Run safe read-only SELECT queries, inspect returned rows, and export results for validation or reporting.",
-    )
-    default_sql = "SELECT COUNT(*) AS total_customers FROM customers"
-    key_prefix = "sql_lab"
-    editor_key = f"{key_prefix}_sql_editor"
-    st.session_state.setdefault(editor_key, default_sql)
-
-    with st.expander("Database tables", expanded=False):
-        st.dataframe(get_table_counts(), use_container_width=True, hide_index=True)
-
-    st.text_area("SQL", key=editor_key, height=200)
-    if st.button("Run read-only query", type="primary", use_container_width=True):
-        run_sql_callback(key_prefix)
-
-    error = st.session_state.get(f"{key_prefix}_sql_error", "")
-    result = st.session_state.get(f"{key_prefix}_sql_result")
-    if error:
-        st.error(f"Query failed: {error}")
-    elif result:
-        rows = result.get("rows", [])
-        st.success(f"Returned {len(rows)} rows.")
-        df = pd.DataFrame(rows)
-        if not df.empty:
-            st.dataframe(df, use_container_width=True, hide_index=True)
-            dataframe_download(df, "sql_lab_results.csv")
-        else:
-            st.info("Query ran successfully but returned no rows.")
-        with st.expander("Executed SQL"):
-            st.code(result.get("sql", ""), language="sql")
-
-
-def show_suggested_questions():
-    hero(
-        "Prompt Library",
-        "Use ready-made telecom analytics prompts, then continue the conversation in the Copilot chat.",
-    )
-    cols = st.columns(2)
-    for idx, question in enumerate(SUGGESTED_QUESTIONS):
-        with cols[idx % 2]:
-            with st.container(border=True):
-                st.markdown(f"**{question}**")
-                if st.button("Send to chat", key=f"suggested_{idx}", use_container_width=True):
-                    st.session_state.page = "Chat"
-                    submit_prompt(question)
-                    st.rerun()
-
-
-# -----------------------------------------------------------------------------
+# ============================================================
 # Sidebar
-# -----------------------------------------------------------------------------
+# ============================================================
 
 
-def render_sidebar():
+def render_sidebar() -> None:
     with st.sidebar:
         st.markdown(
             """
-            <div class="brand-card">
-              <div class="brand-row">
-                <div class="brand-icon">AI</div>
+            <div class="sidebar-brand-card">
+              <div class="sidebar-brand-row">
+                <div class="brand-mark">AI</div>
                 <div>
                   <div class="brand-title">Zain 360 Copilot</div>
                   <div class="brand-subtitle">Customer intelligence workspace</div>
                 </div>
               </div>
-              <div class="brand-copy">Chat, dynamic analytics, customer view, SQL validation, and AI-generated charts in one Streamlit app.</div>
+              <div class="brand-copy">
+                Chat, inspect SQL, explore analytics, and move from insight to action using one clean interface.
+              </div>
+              <div class="status-pill"><span class="status-dot"></span>Connected to local Customer 360 DB</div>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-        st.session_state.theme = st.radio("Theme", ["Dark", "Light"], horizontal=True, label_visibility="collapsed")
-
-        if st.button("＋ New Chat", type="primary", use_container_width=True):
-            create_new_chat()
-            st.rerun()
+        st.markdown('<div class="sidebar-label">Appearance</div>', unsafe_allow_html=True)
+        st.radio(
+            "Appearance",
+            ["Light", "Dark"],
+            key="appearance",
+            horizontal=True,
+            label_visibility="collapsed",
+        )
 
         st.markdown('<div class="sidebar-label">Workspace</div>', unsafe_allow_html=True)
-        for page, icon, label in NAV_ITEMS:
-            btn_type = "primary" if st.session_state.page == page else "secondary"
-            if st.button(f"{icon} {label}", key=f"nav_{page}", type=btn_type, use_container_width=True):
-                st.session_state.page = page
-                st.session_state.open_chat_menu_id = None
+        for page_name, icon, short_label in NAV_ITEMS:
+            button_type = "primary" if st.session_state.page == page_name else "secondary"
+            if st.button(f"{icon}  {short_label}", key=f"nav_{page_name}", type=button_type):
+                st.session_state.page = page_name
                 st.rerun()
 
         st.markdown('<div class="sidebar-divider"></div>', unsafe_allow_html=True)
+        top_col_1, top_col_2 = st.columns([4, 1.1])
+        with top_col_1:
+            if st.button("＋ New chat", key="new_chat", type="primary"):
+                create_new_chat()
+                st.rerun()
+        with top_col_2:
+            if st.button("↻", key="refresh_app", help="Refresh cached data"):
+                st.cache_data.clear()
+                st.rerun()
+
         st.markdown('<div class="sidebar-label">Conversations</div>', unsafe_allow_html=True)
-        st.text_input("Search chats", key="chat_search", placeholder="Search chat history...", label_visibility="collapsed")
-        search = st.session_state.chat_search.lower().strip()
-        visible_chats = [c for c in st.session_state.chat_sessions if search in c["title"].lower()]
+        st.text_input("Search conversations", key="chat_search", placeholder="Search chats...", label_visibility="collapsed")
+        search_text = st.session_state.chat_search.lower().strip()
 
-        for chat in visible_chats[:12]:
-            cols = st.columns([8, 1.4])
-            with cols[0]:
-                label = "💬 " + chat["title"]
-                btn_type = "primary" if st.session_state.current_chat_id == chat["id"] and st.session_state.page == "Chat" else "secondary"
-                if st.button(label, key=f"select_{chat['id']}", type=btn_type, use_container_width=True):
+        visible_chats = [
+            chat
+            for chat in st.session_state.chat_sessions
+            if not search_text or search_text in chat["title"].lower()
+        ]
+
+        for chat in visible_chats[:10]:
+            selected = chat["id"] == st.session_state.current_chat_id and st.session_state.page == "Ask AI"
+            row_col, action_col = st.columns([8, 1.35])
+            with row_col:
+                if st.button(
+                    "💬 " + chat["title"],
+                    key=f"select_chat_{chat['id']}",
+                    type="primary" if selected else "secondary",
+                ):
                     st.session_state.current_chat_id = chat["id"]
-                    st.session_state.page = "Chat"
-                    st.session_state.open_chat_menu_id = None
+                    st.session_state.page = "Ask AI"
                     st.rerun()
-            with cols[1]:
-                if st.button("⋯", key=f"menu_{chat['id']}", use_container_width=True):
-                    st.session_state.open_chat_menu_id = None if st.session_state.open_chat_menu_id == chat["id"] else chat["id"]
-                    st.rerun()
-
-            if st.session_state.open_chat_menu_id == chat["id"]:
-                action_cols = st.columns(3)
-                if action_cols[0].button("Rename", key=f"rename_{chat['id']}", use_container_width=True):
+            with action_col:
+                if st.button("⋯", key=f"rename_open_{chat['id']}", help="Rename this chat"):
                     st.session_state.rename_chat_id = chat["id"]
                     st.session_state.rename_chat_value = chat["title"]
-                    st.session_state.open_chat_menu_id = None
-                    st.rerun()
-                if action_cols[1].download_button(
-                    "Export",
-                    data=export_chat_markdown(chat).encode("utf-8"),
-                    file_name=f"{chat['title'].replace(' ', '_')[:40]}.md",
-                    mime="text/markdown",
-                    use_container_width=True,
-                ):
-                    pass
-                if action_cols[2].button("Delete", key=f"delete_{chat['id']}", use_container_width=True):
-                    delete_chat(chat["id"])
-                    st.rerun()
 
             if st.session_state.rename_chat_id == chat["id"]:
                 new_title = st.text_input(
@@ -1183,54 +1140,561 @@ def render_sidebar():
                     key=f"rename_input_{chat['id']}",
                     label_visibility="collapsed",
                 )
-                rename_cols = st.columns(2)
-                if rename_cols[0].button("Save", key=f"save_{chat['id']}", type="primary", use_container_width=True):
-                    rename_chat(chat["id"], new_title)
-                    st.rerun()
-                if rename_cols[1].button("Cancel", key=f"cancel_{chat['id']}", use_container_width=True):
-                    st.session_state.rename_chat_id = None
-                    st.rerun()
+                save_col, delete_col = st.columns(2)
+                with save_col:
+                    if st.button("Save", key=f"save_rename_{chat['id']}", type="primary"):
+                        rename_chat(chat["id"], new_title)
+                        st.rerun()
+                with delete_col:
+                    if st.button("Delete", key=f"delete_{chat['id']}"):
+                        delete_chat(chat["id"])
+                        st.rerun()
 
         st.markdown(
-            f"""
+            """
             <div class="sidebar-footnote">
-              <b>Database:</b> {safe_html(DB_PATH.name)}<br>
-              <b>Status:</b> {'Connected' if DB_PATH.exists() else 'Missing'}<br>
-              Built for customer view, churn, billing, complaints, campaigns, usage, and network impact.
+              Tip: use Dynamic Analytics for filters and thresholds, then use Ask AI for deeper explanations.
             </div>
             """,
             unsafe_allow_html=True,
         )
 
 
-# -----------------------------------------------------------------------------
-# Main
-# -----------------------------------------------------------------------------
+# ============================================================
+# Page: Ask AI
+# ============================================================
 
 
-def main():
-    init_session_state()
-    apply_theme(st.session_state.theme)
-    render_sidebar()
+def process_chat_prompt(prompt: str) -> None:
+    chat = current_chat()
+    prompt = prompt.strip()
+    if not prompt:
+        return
 
-    if not DB_PATH.exists():
-        hero("Database Missing", "Place zain_customer_360_ai_demo.db next to this Streamlit app, then rerun the app.")
-        st.stop()
+    if chat["title"] == "New Chat":
+        chat["title"] = title_from_question(prompt)
 
-    page = st.session_state.page
-    if page == "Chat":
-        show_chat()
-    elif page == "Analytics":
-        show_analytics()
-    elif page == "Customer":
-        show_customer_workspace()
-    elif page == "Chart Builder":
-        show_chart_builder()
-    elif page == "SQL Query Builder":
-        show_sql_builder()
+    chat["messages"].append({"role": "user", "content": prompt})
+
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking through the data..."):
+            payload = ask_sql_agent_payload(prompt)
+        placeholder = st.empty()
+        rendered = ""
+        for token in payload["answer"].split(" "):
+            rendered += token + " "
+            placeholder.markdown(rendered)
+            time.sleep(0.006)
+
+        if payload.get("sql"):
+            with st.expander("SQL used for this answer"):
+                st.code(payload["sql"], language="sql")
+
+    chat["messages"].append(
+        {"role": "assistant", "content": payload["answer"], "sql": payload.get("sql", "")}
+    )
+
+
+def show_chat() -> None:
+    chat = current_chat()
+    render_hero(
+        "Customer 360 Chat",
+        f"{chat['title']} · Ask about customers, churn, billing, complaints, campaigns, network events, usage, and revenue.",
+    )
+
+    chip_text = " ".join(["Customer profile", "Churn risk", "Overdue invoices", "Campaign conversion", "Network impact"])
+    st.markdown(
+        f'<div class="chip-row"><span class="fake-chip">{chip_text}</span></div>',
+        unsafe_allow_html=True,
+    )
+
+    with st.expander("Quick questions", expanded=False):
+        cols = st.columns(2)
+        for idx, question in enumerate(SUGGESTED_QUESTIONS):
+            with cols[idx % 2]:
+                if st.button(question, key=f"quick_q_{idx}"):
+                    process_chat_prompt(question)
+                    st.rerun()
+
+    for message in chat["messages"]:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+            if message.get("sql"):
+                with st.expander("SQL used for this answer"):
+                    st.code(message["sql"], language="sql")
+
+    export_col, clear_col = st.columns([1, 1])
+    with export_col:
+        st.download_button(
+            "Download chat",
+            data=chat_to_markdown(chat),
+            file_name=f"{chat['title'].replace(' ', '_')[:40]}_chat.md",
+            mime="text/markdown",
+        )
+    with clear_col:
+        if st.button("Clear current chat"):
+            chat["messages"] = [default_assistant_message()]
+            chat["title"] = "New Chat"
+            st.rerun()
+
+    prompt = st.chat_input("Ask Zain 360 Copilot anything about the database...")
+    if prompt:
+        process_chat_prompt(prompt)
+        st.rerun()
+
+
+# ============================================================
+# Page: Executive Overview
+# ============================================================
+
+
+def render_backend_chart(chart: Dict[str, Any]) -> None:
+    rows = chart.get("rows") or []
+    if not rows:
+        st.info(chart.get("summary") or "No chart data found.")
+        return
+    df = pd.DataFrame(rows)
+    chart_type = chart.get("chart_type", "bar")
+    title = chart.get("title", "Chart")
+    if chart_type in {"pie", "doughnut"}:
+        fig = px.pie(
+            df,
+            names="label",
+            values="value",
+            hole=0.48 if chart_type == "doughnut" else 0,
+            title=title,
+        )
+    elif chart_type == "horizontal_bar":
+        fig = px.bar(df, x="value", y="label", orientation="h", title=title)
+    elif chart_type == "line":
+        fig = px.line(df, x="label", y="value", markers=True, title=title)
+    elif chart_type == "area":
+        fig = px.area(df, x="label", y="value", title=title)
     else:
-        show_suggested_questions()
+        fig = px.bar(df, x="label", y="value", title=title)
+    render_plot(fig)
+    if chart.get("summary"):
+        st.caption(chart["summary"])
+    with st.expander("View chart data"):
+        st.dataframe(df, use_container_width=True, hide_index=True)
 
 
-if __name__ == "__main__":
-    main()
+def show_executive_overview() -> None:
+    render_hero(
+        "Executive Overview",
+        "A polished high-level view of customer volume, churn risk, complaint activity, campaigns, network events, and major database areas.",
+    )
+    data = get_database_overview()
+
+    cols = st.columns(len(data["kpis"]))
+    for col, item in zip(cols, data["kpis"]):
+        with col:
+            stat_card(item["label"], f"{item['value']:,}", "Current records in the Customer 360 database")
+
+    section_title("Core distribution", "Clean executive charts generated from the database.")
+    chart_cols = st.columns(2)
+    for index, chart in enumerate(data["charts"]):
+        with chart_cols[index % 2]:
+            render_backend_chart(chart)
+
+    section_title("Database coverage", "Tables available for AI answers, analytics, and SQL exploration.")
+    tables_df = pd.DataFrame(data["tables"]).rename(columns={"label": "Table", "value": "Rows"})
+    st.dataframe(tables_df, use_container_width=True, hide_index=True)
+
+
+# ============================================================
+# Page: Dynamic Analytics
+# ============================================================
+
+
+def as_date_range(value: Any, default_start: date, default_end: date) -> Tuple[date, date]:
+    if isinstance(value, tuple) and len(value) == 2:
+        return value[0], value[1]
+    if isinstance(value, list) and len(value) == 2:
+        return value[0], value[1]
+    return default_start, default_end
+
+
+def customer_aggregate(df: pd.DataFrame) -> pd.DataFrame:
+    if df.empty:
+        return pd.DataFrame()
+    agg = (
+        df.groupby(["customer_id", "full_name", "city", "customer_segment", "value_segment", "risk_level"], dropna=False)
+        .agg(
+            revenue_jod=("total_revenue_jod", "sum"),
+            data_gb=("data_used_gb", "sum"),
+            voice_minutes=("voice_minutes", "sum"),
+            complaints=("complaints_count", "sum"),
+            support_interactions=("support_interactions_count", "sum"),
+            avg_payment_delay=("payment_delay_days", "mean"),
+            churn_score=("churn_score", "max"),
+        )
+        .reset_index()
+    )
+    return agg.sort_values(["churn_score", "revenue_jod"], ascending=[False, False])
+
+
+def show_dynamic_analytics() -> None:
+    render_hero(
+        "Dynamic Analytics Lab",
+        "Adjust segments, markets, risk levels, dates, plan categories, and thresholds. The KPIs, charts, action queue, and exports update immediately.",
+    )
+
+    options = get_options()
+    min_month, max_month = get_month_bounds()
+
+    with st.expander("Filters and adjustable parameters", expanded=True):
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            selected_range = st.date_input("Month range", value=(min_month, max_month), min_value=min_month, max_value=max_month)
+            start_dt, end_dt = as_date_range(selected_range, min_month, max_month)
+            cities = st.multiselect("City", options["cities"], placeholder="All cities")
+            customer_segments = st.multiselect("Customer segment", options["customer_segments"], placeholder="All segments")
+        with c2:
+            value_segments = st.multiselect("Value segment", options["value_segments"], placeholder="All value segments")
+            risk_levels = st.multiselect("Risk level", options["risk_levels"], placeholder="All risk levels")
+            statuses = st.multiselect("Customer status", options["statuses"], placeholder="All statuses")
+        with c3:
+            service_types = st.multiselect("Service type", options["service_types"], placeholder="All services")
+            plan_categories = st.multiselect("Plan category", options["plan_categories"], placeholder="All plan categories")
+            high_churn_threshold = st.slider("Action queue churn threshold", 0, 100, 70, 5)
+            min_revenue_threshold = st.number_input("Minimum customer revenue for action queue", min_value=0.0, value=0.0, step=10.0)
+            min_complaints_threshold = st.slider("Minimum complaints for action queue", 0, 20, 1, 1)
+
+    df = load_filtered_monthly_data(
+        start_dt.isoformat(),
+        end_dt.isoformat(),
+        tuple(cities),
+        tuple(customer_segments),
+        tuple(value_segments),
+        tuple(risk_levels),
+        tuple(service_types),
+        tuple(plan_categories),
+        tuple(statuses),
+    )
+
+    if df.empty:
+        st.warning("No records match the selected filters. Adjust the filters and try again.")
+        return
+
+    unique_customers = int(df["customer_id"].nunique())
+    total_revenue = float(df["total_revenue_jod"].sum())
+    avg_revenue = total_revenue / unique_customers if unique_customers else 0
+    avg_churn = float(df.drop_duplicates("customer_id")["churn_score"].mean())
+    total_complaints = int(df["complaints_count"].sum())
+    total_data = float(df["data_used_gb"].sum())
+    avg_delay = float(df["payment_delay_days"].mean())
+
+    metric_cols = st.columns(6)
+    metrics = [
+        ("Customers", f"{unique_customers:,}", "Unique customers in selected slice"),
+        ("Revenue", format_number(total_revenue, " JOD"), "Total monthly summary revenue"),
+        ("Avg / Customer", format_number(avg_revenue, " JOD"), "Revenue divided by unique customers"),
+        ("Avg Churn", f"{avg_churn:.1f}", "Average churn score"),
+        ("Complaints", f"{total_complaints:,}", "Total complaint count"),
+        ("Data Usage", format_number(total_data, " GB"), "Total selected data usage"),
+    ]
+    for col, item in zip(metric_cols, metrics):
+        with col:
+            stat_card(*item)
+
+    section_title("Auto insights", "Quick reading of the current filter selection.")
+    insight_cols = st.columns(3)
+    top_city = df.groupby("city")["total_revenue_jod"].sum().sort_values(ascending=False).head(1)
+    top_segment = df.groupby("customer_segment")["total_revenue_jod"].sum().sort_values(ascending=False).head(1)
+    risk_counts = df.drop_duplicates("customer_id")["risk_level"].value_counts()
+    with insight_cols[0]:
+        city_text = f"{top_city.index[0]} leads the selected slice with {format_number(top_city.iloc[0], ' JOD')} revenue." if not top_city.empty else "No city insight available."
+        insight_card("Top market", city_text)
+    with insight_cols[1]:
+        seg_text = f"{top_segment.index[0]} is the strongest segment by revenue in this view." if not top_segment.empty else "No segment insight available."
+        insight_card("Segment signal", seg_text)
+    with insight_cols[2]:
+        high_count = int(risk_counts.get("High", 0)) if not risk_counts.empty else 0
+        insight_card("Risk watch", f"{high_count:,} high-risk customers are present. Average payment delay is {avg_delay:.1f} days.")
+
+    tab1, tab2, tab3, tab4 = st.tabs(["Revenue", "Risk & Segments", "Action Queue", "Data Export"])
+
+    with tab1:
+        c1, c2 = st.columns(2)
+        with c1:
+            trend = df.groupby("summary_month", as_index=False)["total_revenue_jod"].sum()
+            render_plot(px.line(trend, x="summary_month", y="total_revenue_jod", markers=True, title="Revenue Trend"))
+        with c2:
+            city_rev = df.groupby("city", as_index=False)["total_revenue_jod"].sum().sort_values("total_revenue_jod", ascending=False).head(10)
+            render_plot(px.bar(city_rev, x="city", y="total_revenue_jod", title="Top Cities by Revenue"))
+
+        c3, c4 = st.columns(2)
+        with c3:
+            service_rev = df.groupby("service_type", as_index=False)["total_revenue_jod"].sum().sort_values("total_revenue_jod", ascending=False)
+            render_plot(px.bar(service_rev, x="service_type", y="total_revenue_jod", title="Revenue by Service Type"))
+        with c4:
+            plan_rev = df.groupby("plan_category", as_index=False)["total_revenue_jod"].sum().sort_values("total_revenue_jod", ascending=False).head(10)
+            render_plot(px.bar(plan_rev, x="plan_category", y="total_revenue_jod", title="Revenue by Plan Category"))
+
+    with tab2:
+        unique_customer_df = df.drop_duplicates("customer_id")
+        c1, c2 = st.columns(2)
+        with c1:
+            risk_dist = unique_customer_df.groupby("risk_level", as_index=False)["customer_id"].count().rename(columns={"customer_id": "customers"})
+            render_plot(px.pie(risk_dist, names="risk_level", values="customers", hole=0.52, title="Risk Level Distribution"))
+        with c2:
+            segment_rev = df.groupby("value_segment", as_index=False)["total_revenue_jod"].sum().sort_values("total_revenue_jod", ascending=False)
+            render_plot(px.bar(segment_rev, x="value_segment", y="total_revenue_jod", title="Revenue by Value Segment"))
+
+        c3, c4 = st.columns(2)
+        with c3:
+            complaints_segment = df.groupby("customer_segment", as_index=False)["complaints_count"].sum().sort_values("complaints_count", ascending=False)
+            render_plot(px.bar(complaints_segment, x="customer_segment", y="complaints_count", title="Complaints by Segment"))
+        with c4:
+            churn_by_service = df.groupby("service_type", as_index=False)["churn_score"].mean().sort_values("churn_score", ascending=False)
+            render_plot(px.bar(churn_by_service, x="service_type", y="churn_score", title="Average Churn by Service"))
+
+    with tab3:
+        agg = customer_aggregate(df)
+        queue = agg[
+            (agg["churn_score"] >= high_churn_threshold)
+            & (agg["revenue_jod"] >= min_revenue_threshold)
+            & (agg["complaints"] >= min_complaints_threshold)
+        ].copy()
+        queue = queue.sort_values(["churn_score", "complaints", "revenue_jod"], ascending=[False, False, False])
+        queue["recommended_focus"] = queue.apply(
+            lambda row: "Retention call + complaint review" if row["complaints"] > 0 else "Retention offer review",
+            axis=1,
+        )
+        st.caption(f"{len(queue):,} customers match the current action thresholds.")
+        st.dataframe(queue.head(100), use_container_width=True, hide_index=True)
+        st.download_button(
+            "Download action queue CSV",
+            data=queue.to_csv(index=False).encode("utf-8"),
+            file_name="zain_360_action_queue.csv",
+            mime="text/csv",
+        )
+
+    with tab4:
+        preview_cols = [
+            "summary_month", "customer_id", "full_name", "city", "customer_segment", "value_segment", "risk_level",
+            "service_type", "plan_category", "total_revenue_jod", "data_used_gb", "complaints_count", "payment_delay_days", "churn_score"
+        ]
+        st.dataframe(df[preview_cols].head(500), use_container_width=True, hide_index=True)
+        st.download_button(
+            "Download filtered analytics CSV",
+            data=df.to_csv(index=False).encode("utf-8"),
+            file_name="zain_360_filtered_analytics.csv",
+            mime="text/csv",
+        )
+
+
+# ============================================================
+# Page: Customer Explorer
+# ============================================================
+
+
+def show_customer_explorer() -> None:
+    render_hero(
+        "Customer Explorer",
+        "Search a customer and view profile, plan, value, churn reason, invoices, complaints, support activity, campaigns, and monthly behavior.",
+    )
+
+    search_col, count_col = st.columns([3, 1])
+    with search_col:
+        term = st.text_input("Search customer", placeholder="Customer ID, name, phone, email, or city")
+    with count_col:
+        limit = st.number_input("Result limit", min_value=5, max_value=100, value=30, step=5)
+
+    matches = search_customers(term, int(limit))
+    if matches.empty:
+        st.warning("No customers found for this search.")
+        return
+
+    labels = {
+        int(row.customer_id): f"{int(row.customer_id)} · {row.full_name} · {row.city} · {row.customer_segment} · {row.status}"
+        for row in matches.itertuples()
+    }
+    selected_id = st.selectbox("Select customer", list(labels.keys()), format_func=lambda cid: labels[cid])
+    bundle = load_customer_bundle(int(selected_id))
+    profile = bundle["profile"]
+
+    if profile.empty:
+        st.error("Could not load this customer profile.")
+        return
+
+    p = profile.iloc[0]
+    metric_cols = st.columns(5)
+    with metric_cols[0]:
+        stat_card("Risk level", p.get("risk_level", "—"), f"Churn score {float(p.get('churn_score', 0)):.1f}")
+    with metric_cols[1]:
+        stat_card("Value segment", p.get("value_segment", "—"), f"ARPU {format_number(float(p.get('arpu_jod', 0)), ' JOD')}")
+    with metric_cols[2]:
+        stat_card("6M revenue", format_number(float(p.get("total_revenue_6m_jod", 0)), " JOD"), "Customer value")
+    with metric_cols[3]:
+        stat_card("City", p.get("city", "—"), p.get("governorate", ""))
+    with metric_cols[4]:
+        stat_card("Status", p.get("status", "—"), p.get("customer_segment", ""))
+
+    c1, c2 = st.columns([1.15, 1])
+    with c1:
+        section_title("Profile snapshot")
+        profile_cols = [
+            "customer_id", "full_name", "gender", "age_group", "nationality", "preferred_language",
+            "email", "phone_number", "signup_date", "customer_type", "customer_segment", "status"
+        ]
+        profile_df = profile[profile_cols].T.rename(columns={0: "Value"})
+        st.dataframe(profile_df, use_container_width=True)
+    with c2:
+        section_title("Recommended action")
+        insight_card("Main risk reason", str(p.get("main_risk_reason", "No risk reason available.")))
+        st.write("")
+        insight_card("Next best action", str(p.get("recommended_action", "No action available.")))
+        if st.button("Ask AI to explain this customer", type="primary"):
+            chat = current_chat()
+            question = f"Explain customer ID {int(selected_id)} profile, churn risk, complaints, invoices, and recommended action."
+            chat["messages"].append({"role": "user", "content": question})
+            with st.spinner("Preparing customer explanation..."):
+                payload = ask_sql_agent_payload(question)
+            chat["messages"].append({"role": "assistant", "content": payload["answer"], "sql": payload.get("sql", "")})
+            st.session_state.page = "Ask AI"
+            st.rerun()
+
+    tabs = st.tabs(["Monthly", "Subscriptions", "Invoices", "Complaints", "Support", "Campaigns", "Devices"])
+    with tabs[0]:
+        monthly = bundle["monthly"]
+        if monthly.empty:
+            st.info("No monthly summary found.")
+        else:
+            c1, c2 = st.columns(2)
+            with c1:
+                render_plot(px.line(monthly, x="summary_month", y="total_revenue_jod", markers=True, title="Monthly Revenue"), height=360)
+            with c2:
+                render_plot(px.line(monthly, x="summary_month", y="churn_score", markers=True, title="Monthly Churn Score"), height=360)
+            st.dataframe(monthly, use_container_width=True, hide_index=True)
+    tab_names = ["subscriptions", "invoices", "complaints", "support", "campaigns", "devices"]
+    for tab, name in zip(tabs[1:], tab_names):
+        with tab:
+            df = bundle[name]
+            if df.empty:
+                st.info(f"No {name} records found for this customer.")
+            else:
+                st.dataframe(df, use_container_width=True, hide_index=True)
+
+
+# ============================================================
+# Page: Chart Builder
+# ============================================================
+
+CHART_TYPES = {
+    "Bar chart": "bar",
+    "Horizontal bar": "horizontal_bar",
+    "Pie chart": "pie",
+    "Doughnut chart": "doughnut",
+    "Line chart": "line",
+    "Area chart": "area",
+}
+
+
+def show_chart_builder() -> None:
+    render_hero(
+        "Natural Language Chart Builder",
+        "Describe the chart you need. The app turns your request into a safe database chart and shows the result with chart data.",
+    )
+    default_q = "Build a chart based on customer with ID = 9 by their complaints type and number."
+    q_col, type_col = st.columns([3, 1])
+    with q_col:
+        question = st.text_area("Chart inquiry", value=default_q, height=120)
+    with type_col:
+        chart_label = st.selectbox("Chart type", list(CHART_TYPES.keys()))
+        st.write("")
+        create_chart = st.button("Create chart", type="primary")
+
+    if create_chart:
+        with st.spinner("Building chart from database..."):
+            st.session_state.last_chart = build_chart_from_question(question, CHART_TYPES[chart_label])
+
+    if st.session_state.get("last_chart"):
+        render_backend_chart(st.session_state.last_chart)
+
+
+# ============================================================
+# Page: SQL Console
+# ============================================================
+
+SAFE_SQL_EXAMPLES = {
+    "Total customers": "SELECT COUNT(*) AS total_customers FROM customers",
+    "Top churn customers": """SELECT c.customer_id, c.full_name, c.city, ch.churn_score, ch.risk_level, ch.recommended_action
+FROM customer_churn_scores ch
+JOIN customers c ON c.customer_id = ch.customer_id
+ORDER BY ch.churn_score DESC
+LIMIT 10""",
+    "Revenue by value segment": """SELECT value_segment, COUNT(*) AS total_customers, ROUND(AVG(arpu_jod), 2) AS avg_arpu, ROUND(AVG(total_revenue_6m_jod), 2) AS avg_revenue_6m
+FROM customer_value_segments
+GROUP BY value_segment
+ORDER BY avg_revenue_6m DESC""",
+    "Complaints by category": """SELECT complaint_category, COUNT(*) AS total_complaints
+FROM complaints
+GROUP BY complaint_category
+ORDER BY total_complaints DESC""",
+}
+
+
+def show_sql_console() -> None:
+    render_hero(
+        "SQL Console",
+        "Run safe read-only SELECT queries, inspect the rows, and export results. Destructive SQL is blocked by the backend validation.",
+    )
+    example = st.selectbox("Load example", list(SAFE_SQL_EXAMPLES.keys()))
+    if "sql_console_text" not in st.session_state:
+        st.session_state.sql_console_text = SAFE_SQL_EXAMPLES[example]
+    if st.button("Use selected example"):
+        st.session_state.sql_console_text = SAFE_SQL_EXAMPLES[example]
+
+    sql = st.text_area("SQL", key="sql_console_text", height=220)
+    run = st.button("Run query", type="primary")
+    if run:
+        try:
+            result = execute_sql_query(sql, limit=100)
+            rows = result.get("rows", [])
+            st.success(f"Returned {len(rows):,} rows.")
+            if rows:
+                df = pd.DataFrame(rows)
+                st.dataframe(df, use_container_width=True, hide_index=True)
+                st.download_button(
+                    "Download result CSV",
+                    data=df.to_csv(index=False).encode("utf-8"),
+                    file_name="sql_result.csv",
+                    mime="text/csv",
+                )
+            with st.expander("Final SQL executed"):
+                st.code(result.get("sql", sql), language="sql")
+        except Exception as exc:
+            st.error(f"Query failed: {type(exc).__name__}: {exc}")
+
+
+# ============================================================
+# App router
+# ============================================================
+
+init_state()
+inject_css()
+render_sidebar()
+
+if not DB_PATH.exists():
+    st.error("Database file is missing. Place zain_customer_360_ai_demo.db next to streamlit_app.py.")
+    st.stop()
+
+page = st.session_state.page
+
+if page == "Ask AI":
+    show_chat()
+elif page == "Executive Overview":
+    show_executive_overview()
+elif page == "Dynamic Analytics":
+    show_dynamic_analytics()
+elif page == "Customer Explorer":
+    show_customer_explorer()
+elif page == "Chart Builder":
+    show_chart_builder()
+else:
+    show_sql_console()
