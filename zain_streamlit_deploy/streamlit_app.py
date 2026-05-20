@@ -52,9 +52,46 @@ st.markdown(
         padding: 1.2rem 1rem;
       }
       section[data-testid="stSidebar"] img {
-        max-width: 220px;
-        margin: 0 auto 1rem;
+        max-width: 190px;
+        margin: 0 auto 0.65rem;
         display: block;
+      }
+      .sidebar-hero {
+        border: 1px solid #303746;
+        border-radius: 16px;
+        padding: 0.95rem;
+        margin: 0.35rem 0 1rem;
+        background:
+          radial-gradient(circle at 15% 0%, rgba(215, 25, 32, 0.24), transparent 34%),
+          linear-gradient(180deg, rgba(32, 38, 53, 0.98), rgba(17, 20, 27, 0.98));
+        box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
+      }
+      .sidebar-hero-title {
+        color: #ffffff;
+        font-size: 1rem;
+        font-weight: 900;
+        line-height: 1.25;
+        margin-bottom: 0.35rem;
+      }
+      .sidebar-hero-copy {
+        color: #b6bcc8;
+        font-size: 0.78rem;
+        line-height: 1.45;
+      }
+      .sidebar-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.38rem;
+        margin-top: 0.75rem;
+      }
+      .sidebar-chip {
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 999px;
+        padding: 0.26rem 0.48rem;
+        color: #f4f4f5;
+        background: rgba(255, 255, 255, 0.06);
+        font-size: 0.67rem;
+        font-weight: 800;
       }
       .sidebar-title {
         color: #8f96a3;
@@ -67,7 +104,7 @@ st.markdown(
       .nav-active {
         border: 1px solid rgba(215, 25, 32, 0.62);
         border-radius: 14px;
-        padding: 0.7rem 0.85rem;
+        padding: 0.72rem 0.85rem;
         margin-bottom: 0.55rem;
         color: #ffffff;
         background: linear-gradient(135deg, rgba(215, 25, 32, 0.28), rgba(32, 38, 53, 0.96));
@@ -100,6 +137,14 @@ st.markdown(
         color: #ffffff;
         background: linear-gradient(180deg, #2d3548, #1d2330);
         transform: translateY(-1px);
+      }
+      .sidebar-footnote {
+        margin-top: 1rem;
+        border-top: 1px solid #2b303b;
+        padding-top: 0.8rem;
+        color: #8f96a3;
+        font-size: 0.72rem;
+        line-height: 1.45;
       }
       div[data-testid="stAlert"] {
         border-radius: 10px;
@@ -301,6 +346,23 @@ with st.sidebar:
     else:
         st.warning("Logo image was not found in the app folder.")
 
+    st.markdown(
+        """
+        <div class="sidebar-hero">
+          <div class="sidebar-hero-title">Customer 360 AI Copilot</div>
+          <div class="sidebar-hero-copy">
+            Explore subscribers, churn, complaints, campaigns, billing, and network signals from one conversational workspace.
+          </div>
+          <div class="sidebar-chips">
+            <span class="sidebar-chip">SQL-backed</span>
+            <span class="sidebar-chip">Charts</span>
+            <span class="sidebar-chip">Read-only</span>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     if "page" not in st.session_state:
         st.session_state.page = "Chat"
 
@@ -312,6 +374,15 @@ with st.sidebar:
         if st.button(label, key=f"nav_{page_name}", type="secondary"):
             st.session_state.page = page_name
             st.rerun()
+
+    st.markdown(
+        """
+        <div class="sidebar-footnote">
+          Built for fast telecom insight: ask, inspect the SQL, and turn answers into action.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 page = st.session_state.page
 
