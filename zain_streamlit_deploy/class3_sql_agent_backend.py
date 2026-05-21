@@ -2,6 +2,8 @@ import json
 import os
 import re
 import sqlite3
+from datetime import datetime
+from difflib import SequenceMatcher
 from pathlib import Path
 
 from langchain.agents import create_agent
@@ -12,8 +14,10 @@ from langchain_community.utilities import SQLDatabase
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "zain_customer_360_ai_demo.db"
+QA_MEMORY_PATH = BASE_DIR / "rag_qa_memory.txt"
 MODEL_NAME = "gpt-4.1-mini"
 TOP_K = 5
+RAG_MIN_SIMILARITY = 0.52
 NON_DATABASE_PATTERNS = (
     r"^\s*(hi|hello|hey|مرحبا|اهلا|أهلا|السلام عليكم)\s*[!.؟?]*\s*$",
     r"^\s*(thanks|thank you|شكرا|شكرًا)\s*[!.؟?]*\s*$",
@@ -87,6 +91,136 @@ def _rows_to_markdown(rows):
 def _run_rows(query, params=()):
     with _connect() as conn:
         return conn.execute(query, params).fetchall()
+
+
+def _normalize_question(text):
+    return re.sub(r"\s+", " ", str(text).strip().lower())
+
+
+def _question_tokens(text):
+    stop_words = {
+        "a",
+        "an",
+        "and",
+        "are",
+        "by",
+        "for",
+        "from",
+        "have",
+        "how",
+        "in",
+        "is",
+        "me",
+        "of",
+        "on",
+        "or",
+        "show",
+        "the",
+        "to",
+        "what",
+        "which",
+        "with",
+    }
+    tokens = set()
+    for token in re.findall(r"[a-z0-9_]+", _normalize_question(text)):
+        if len(token) <= 1 or token in stop_words:
+            continue
+        tokens.add(token)
+        if len(token) > 3 and token.endswith("s"):
+            tokens.add(token[:-1])
+    return tokens
+
+
+def _number_tokens(text):
+    return set(re.findall(r"\b\d+\b", str(text)))
+
+
+def _question_similarity(left, right):
+    left_norm = _normalize_question(left)
+    right_norm = _normalize_question(right)
+    if not left_norm or not right_norm:
+        return 0.0
+
+    left_numbers = _number_tokens(left_norm)
+    right_numbers = _number_tokens(right_norm)
+    if left_numbers and right_numbers and left_numbers != right_numbers:
+        return 0.0
+
+    left_tokens = _question_tokens(left_norm)
+    right_tokens = _question_tokens(right_norm)
+    token_score = 0.0
+    if left_tokens or right_tokens:
+        token_score = len(left_tokens & right_tokens) / max(1, len(left_tokens | right_tokens))
+    sequence_score = SequenceMatcher(None, left_norm, right_norm).ratio()
+    return (0.6 * token_score) + (0.4 * sequence_score)
+
+
+def _read_qa_memory():
+    if not QA_MEMORY_PATH.exists():
+        return []
+
+    records = []
+    for line in QA_MEMORY_PATH.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if record.get("question") and record.get("answer"):
+            records.append(record)
+    return records
+
+
+def retrieve_rag_answer(question):
+    q = _normalize_question(question)
+    if any(re.search(pattern, q, flags=re.IGNORECASE) for pattern in NON_DATABASE_PATTERNS):
+        return None
+
+    best_record = None
+    best_score = 0.0
+    for record in _read_qa_memory():
+        score = _question_similarity(question, record.get("question", ""))
+        if score > best_score:
+            best_score = score
+            best_record = record
+
+    if not best_record or best_score < RAG_MIN_SIMILARITY:
+        return None
+
+    return {
+        "answer": best_record["answer"],
+        "sql": "",
+        "source": "RAG Agent",
+        "matched_question": best_record.get("question", ""),
+        "match_score": round(best_score, 3),
+    }
+
+
+def save_qa_to_memory(question, answer, sql="", source="SQL Agent"):
+    question = str(question).strip()
+    answer = str(answer).strip()
+    if not question or not answer:
+        return
+
+    q = _normalize_question(question)
+    if any(re.search(pattern, q, flags=re.IGNORECASE) for pattern in NON_DATABASE_PATTERNS):
+        return
+
+    for record in _read_qa_memory():
+        if _normalize_question(record.get("question", "")) == q:
+            return
+
+    record = {
+        "created_at": datetime.now().isoformat(timespec="seconds"),
+        "source_agent": source,
+        "question": question,
+        "answer": answer,
+        "sql": str(sql or "").strip(),
+    }
+    with QA_MEMORY_PATH.open("a", encoding="utf-8") as file:
+        file.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
 def _schema_summary():
@@ -654,8 +788,20 @@ Rules:
 
 
 def ask_sql_agent_payload(question):
+    rag_payload = retrieve_rag_answer(question)
+    if rag_payload:
+        save_qa_to_memory(question, rag_payload.get("answer", ""), "", rag_payload["source"])
+        return rag_payload
+
     direct_payload = answer_direct_query(question)
     if direct_payload:
+        direct_payload["source"] = "SQL Agent"
+        save_qa_to_memory(
+            question,
+            direct_payload.get("answer", ""),
+            direct_payload.get("sql", ""),
+            direct_payload["source"],
+        )
         return direct_payload
 
     global _SQL_AGENT
@@ -668,7 +814,9 @@ def ask_sql_agent_payload(question):
         sql = plan_sql_for_question(question)
     except Exception:
         sql = ""
-    return {"answer": answer, "sql": sql}
+    payload = {"answer": answer, "sql": sql, "source": "SQL Agent"}
+    save_qa_to_memory(question, answer, sql, payload["source"])
+    return payload
 
 
 def ask_sql_agent(question):
