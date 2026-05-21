@@ -832,6 +832,9 @@ def chat_to_markdown(chat):
     for message in chat["messages"]:
         role = "User" if message["role"] == "user" else "Assistant"
         lines.append(f"## {role}")
+        if message.get("source"):
+            lines.append(f"Agent: {message['source']}")
+            lines.append("")
         lines.append(message.get("content", ""))
         if message.get("sql"):
             lines.append("")
@@ -865,6 +868,9 @@ def ask_and_store(prompt):
             payload = ask_sql_agent_payload(prompt)
         answer = payload.get("answer", "No answer was returned.")
         sql = payload.get("sql", "")
+        source = payload.get("source", "SQL Agent")
+        matched_question = payload.get("matched_question", "")
+        match_score = payload.get("match_score", "")
     except Exception as exc:
         answer = (
             "I could not complete this request. "
@@ -872,8 +878,20 @@ def ask_and_store(prompt):
             "Please confirm the OPENAI_API_KEY is configured if this question requires the SQL agent."
         )
         sql = ""
+        source = "Error"
+        matched_question = ""
+        match_score = ""
 
-    chat["messages"].append({"role": "assistant", "content": answer, "sql": sql})
+    chat["messages"].append(
+        {
+            "role": "assistant",
+            "content": answer,
+            "sql": sql,
+            "source": source,
+            "matched_question": matched_question,
+            "match_score": match_score,
+        }
+    )
 
 
 def run_sql_callback(key_prefix):
@@ -1011,7 +1029,13 @@ def show_chat():
 
     for index, message in enumerate(chat["messages"]):
         with st.chat_message(message["role"]):
+            if message.get("source"):
+                st.caption(f"Answered by: {message['source']}")
             st.markdown(message.get("content", ""))
+            if message.get("source") == "RAG Agent" and message.get("matched_question"):
+                score = message.get("match_score", "")
+                score_text = f" Similarity: {score}" if score != "" else ""
+                st.caption(f"Memory match: {message['matched_question']}.{score_text}")
             if message.get("sql"):
                 with st.expander("SQL visibility"):
                     render_sql_runner(message["sql"], key_prefix=f"{chat['id']}_history_{index}")
